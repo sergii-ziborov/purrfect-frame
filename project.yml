@@ -1,0 +1,76 @@
+name: PurrfectFrame
+
+options:
+  bundleIdPrefix: com.sergiiziborov
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: XMS5ZC28UJ
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    SUPPORTS_MACCATALYST: NO
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+targets:
+  PurrfectFrame:
+    type: application
+    platform: iOS
+    sources:
+      - path: PurrfectFrame
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sergiiziborov.purrfectframe
+        PRODUCT_NAME: PurrfectFrame
+        INFOPLIST_KEY_CFBundleDisplayName: Purrfect Frame
+        INFOPLIST_KEY_CFBundleDevelopmentRegion: en
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.games
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_BackgroundColor: creamBackground
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Purrfect Frame saves the shot you just took to your photo library when you choose Save to Photos."
+        GENERATE_INFOPLIST_FILE: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SWIFT_STRICT_CONCURRENCY: complete
+    scheme:
+      testTargets:
+        - PurrfectFrameTests
+        - PurrfectFrameUITests
+      gatherCoverageData: false
+    entitlements:
+      path: PurrfectFrame/PurrfectFrame.entitlements
+
+  PurrfectFrameTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PurrfectFrameTests
+    dependencies:
+      - target: PurrfectFrame
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sergiiziborov.purrfectframe.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+  PurrfectFrameUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: PurrfectFrameUITests
+    dependencies:
+      - target: PurrfectFrame
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sergiiziborov.purrfectframe.uitests
+        GENERATE_INFOPLIST_FILE: YES
