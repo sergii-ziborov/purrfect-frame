@@ -76,13 +76,14 @@ struct CameraPlayView: View {
                 Text(mission.hint)
                     .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundStyle(Palette.inkSoft)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
             }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(Palette.cream, in: Capsule())
+        .background(Palette.cream, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .accessibilityIdentifier("mission-banner")
     }
 

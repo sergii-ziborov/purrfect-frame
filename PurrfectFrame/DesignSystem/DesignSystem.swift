@@ -77,13 +77,14 @@ struct FeaturePill: View {
     var title: String
     var subtitle: String
     var tint: Color
+    var compact: Bool = false
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: compact ? 4 : 6) {
             ZStack {
-                Circle().fill(tint.opacity(0.18)).frame(width: 52, height: 52)
+                Circle().fill(tint.opacity(0.18)).frame(width: compact ? 42 : 52, height: compact ? 42 : 52)
                 Image(systemName: icon)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: compact ? 16 : 20, weight: .semibold))
                     .foregroundStyle(tint)
             }
             Text(title)
