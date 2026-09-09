@@ -4,48 +4,26 @@ struct WorldsView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        ZStack {
-            Palette.cream.ignoresSafeArea()
-            VStack(spacing: 0) {
-                nav("Worlds")
-                ScrollView {
-                    VStack(spacing: 18) {
-                        ForEach(WorldID.allCases) { world in
-                            worldCard(world)
-                        }
+        PFScreen(title: "Worlds", onBack: { model.screen = .home }) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 18) {
+                    ForEach(WorldID.allCases) { world in
+                        worldCard(world)
                     }
-                    .padding(20)
-                    .frame(maxWidth: 640)
-                    .frame(maxWidth: .infinity)
                 }
+                .padding(20)
+                .frame(maxWidth: 640)
+                .frame(maxWidth: .infinity)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-    }
-
-    private func nav(_ title: String) -> some View {
-        HStack {
-            Button {
-                model.screen = .home
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(Palette.ink)
-            }
-            .accessibilityIdentifier("back-button")
-            Spacer()
-            Text(title)
-                .font(.pfDisplay(22))
-                .foregroundStyle(Palette.ink)
-            Spacer()
-            Color.clear.frame(width: 18, height: 18)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
     }
 
     private func worldCard(_ world: WorldID) -> some View {
         let levels = LevelCatalog.levels(for: world)
         let cleared = levels.filter { model.progress.stars(for: $0.id) > 0 }.count
+        let earned = model.progress.earnedStars(in: world)
+        let possible = model.progress.possibleStars(in: world)
         let unlocked = model.progress.isUnlocked(world)
 
         return Button {
@@ -58,11 +36,7 @@ struct WorldsView: View {
         } label: {
             VStack(alignment: .leading, spacing: 0) {
                 ZStack(alignment: .bottomLeading) {
-                    Image(world.backgroundAsset)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 168)
-                        .clipped()
+                    SceneCrop(name: world.backgroundAsset, height: 176)
                     LinearGradient(colors: [.clear, .black.opacity(0.55)], startPoint: .top, endPoint: .bottom)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(world.title)
@@ -77,11 +51,15 @@ struct WorldsView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text(unlocked ? "\(cleared)/\(levels.count)" : "Locked")
+                        Text(unlocked ? "\(cleared)/\(levels.count) levels" : "Locked")
                             .font(.pfBody(14))
                             .foregroundStyle(Palette.inkSoft)
                         Spacer()
-                        if !unlocked {
+                        if unlocked {
+                            Label("\(earned)/\(possible)", systemImage: "star.fill")
+                                .font(.pfBody(12))
+                                .foregroundStyle(Palette.gold)
+                        } else {
                             Label(lockHint(world), systemImage: "lock.fill")
                                 .font(.pfBody(12))
                                 .foregroundStyle(Palette.inkSoft)

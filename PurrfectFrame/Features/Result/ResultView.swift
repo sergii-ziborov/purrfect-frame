@@ -1,15 +1,16 @@
 import SwiftUI
 import Photos
+import StoreKit
 
 struct ResultView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.requestReview) private var requestReview
     @State private var saveMessage: String?
 
     var body: some View {
-        ZStack {
-            Palette.cream.ignoresSafeArea()
+        VStack(spacing: 0) {
             if let session = model.session, let outcome = model.lastOutcome {
-                ScrollView {
+                ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Text(outcome.evaluation.title)
                             .font(.pfDisplay(32))
@@ -36,10 +37,20 @@ struct ResultView: View {
                                 .foregroundStyle(Palette.moss)
                         }
                     }
-                    .padding(24)
+                    .padding(.top, 16)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
                     .frame(maxWidth: 560)
                     .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Palette.cream.ignoresSafeArea())
+        .onAppear {
+            if model.consumeReviewPrompt() {
+                requestReview()
             }
         }
     }

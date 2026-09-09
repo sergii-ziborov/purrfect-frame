@@ -2,13 +2,16 @@ import SwiftUI
 import UIKit
 
 enum Screen: Equatable {
+    case intro
     case home
     case play
     case result
     case worlds
     case collection
     case collectionDetail(UUID)
+    case ratings
     case settings
+    case about
 }
 
 struct ShotOutcome: Equatable {
@@ -24,6 +27,7 @@ final class AppModel {
     var photos: [CapturedPhoto]
     var session: RoundSession?
     var lastOutcome: ShotOutcome?
+    var shouldPromptReview = false
 
     let photoStore: PhotoStore
     private let progressStore: ProgressStore
@@ -35,6 +39,10 @@ final class AppModel {
         self.photoStore = photoStore
         self.progress = progressStore.load()
         self.photos = photoStore.loadAll()
+        let skipIntro = ProcessInfo.processInfo.arguments.contains("-ui-testing")
+        if !progress.hasSeenIntro && !skipIntro {
+            self.screen = .intro
+        }
     }
 
     func playTapped() {
@@ -102,6 +110,10 @@ final class AppModel {
         photos.insert(photo, at: 0)
         if evaluation.success {
             progress.recordSuccess(level: session.context.level, stars: evaluation.stars)
+            if progress.clearedLevels >= 3 && !progress.didAskForRating {
+                progress.didAskForRating = true
+                shouldPromptReview = true
+            }
             progressStore.save(progress)
             Feedback.success(haptics: progress.hapticsEnabled)
         } else {
@@ -116,7 +128,9 @@ final class AppModel {
     }
 
     func resetProgress() {
+        let seenIntro = progress.hasSeenIntro
         progress = .fresh
+        progress.hasSeenIntro = seenIntro
         progressStore.save(progress)
     }
 
@@ -128,6 +142,18 @@ final class AppModel {
         session = nil
         lastOutcome = nil
         screen = .home
+    }
+
+    func finishIntro() {
+        progress.hasSeenIntro = true
+        progressStore.save(progress)
+        screen = .home
+    }
+
+    func consumeReviewPrompt() -> Bool {
+        guard shouldPromptReview else { return false }
+        shouldPromptReview = false
+        return true
     }
 
     private func startPlay(world: WorldID, index: Int, daily: Bool, seed: UInt64? = nil) {

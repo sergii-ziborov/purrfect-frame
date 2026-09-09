@@ -64,51 +64,64 @@ struct StageView: View {
     var showChrome: Bool = true
     var hintActive: Bool = false
     var levelIndex: Int = 0
+    var canvasSize: CGSize? = nil
 
     var body: some View {
-        GeometryReader { geo in
-            let width = geo.size.width
-            let height = geo.size.height
-            ZStack {
-                Image(backgroundName ?? world.background(for: levelIndex))
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: width, height: height)
-                    .clipped()
-                    .id(backgroundName ?? world.background(for: levelIndex))
+        if let canvasSize {
+            canvas(size: canvasSize)
+                .frame(width: canvasSize.width, height: canvasSize.height)
+                .clipped()
+        } else {
+            GeometryReader { geo in
+                canvas(size: geo.size)
+            }
+            .clipped()
+        }
+    }
 
-                LinearGradient(
-                    colors: [.black.opacity(0.08), .clear, .black.opacity(0.18)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+    private func canvas(size: CGSize) -> some View {
+        let width = size.width
+        let height = max(size.height, 1)
+        let scale = min(width / 340, height / 560)
+        return ZStack {
+            Image(backgroundName ?? world.background(for: levelIndex))
+                .resizable()
+                .scaledToFill()
+                .frame(width: width, height: height, alignment: .bottom)
+                .clipped()
+                .id(backgroundName ?? world.background(for: levelIndex))
 
-                ForEach(StageLayout.slots(for: world)) { slot in
-                    let pose = poses[slot.id] ?? .cameraReady
-                    CreatureView(id: slot.id, pose: pose)
-                        .scaleEffect(slot.scale * min(width / 390, height / 620))
-                        .position(
-                            x: width * (0.5 + slot.x) + pose.cover * pose.turnSign * 8,
-                            y: height * (0.52 + slot.y)
-                        )
-                        .zIndex(slot.z + pose.cover * 2 + pose.jump)
-                }
+            LinearGradient(
+                colors: [.black.opacity(0.08), .clear, .black.opacity(0.18)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
 
-                Text(world.caption)
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .tracking(1.2)
-                    .foregroundStyle(.white.opacity(0.72))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(.black.opacity(0.28), in: Capsule())
-                    .position(x: width * 0.5, y: height * 0.90)
+            ForEach(StageLayout.slots(for: world)) { slot in
+                let pose = poses[slot.id] ?? .cameraReady
+                CreatureView(id: slot.id, pose: pose)
+                    .scaleEffect(slot.scale * scale)
+                    .position(
+                        x: width * (0.5 + slot.x) + pose.cover * pose.turnSign * 8,
+                        y: height * (0.62 + slot.y)
+                    )
+                    .zIndex(slot.z + pose.cover * 2 + pose.jump)
+            }
 
-                if showChrome {
-                    ViewfinderCorners(active: hintActive)
-                        .padding(10)
-                }
+            Text(world.caption)
+                .font(.system(size: 9, weight: .bold, design: .rounded))
+                .tracking(1.2)
+                .foregroundStyle(.white.opacity(0.72))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(.black.opacity(0.28), in: Capsule())
+                .position(x: width * 0.5, y: height * 0.93)
+
+            if showChrome {
+                ViewfinderCorners(active: hintActive)
+                    .padding(10)
             }
         }
-        .clipped()
+        .frame(width: width, height: height)
     }
 }

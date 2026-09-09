@@ -2,7 +2,6 @@ import SwiftUI
 
 struct CameraPlayView: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var flash = false
     @State private var shutterPressed = false
 
@@ -16,10 +15,22 @@ struct CameraPlayView: View {
                     let elapsed = session.elapsed(at: context.date)
                     let hint = model.progress.hintFlashEnabled && session.timeline.isDeclaredSuccessWindow(elapsed)
 
-                    VStack(spacing: 0) {
-                        topBar(session: session)
-                        stage(session: session, poses: poses, hint: hint)
-                        controls(session: session, now: context.date)
+                    ZStack(alignment: .top) {
+                        StageView(
+                            world: session.context.world,
+                            poses: poses,
+                            showChrome: true,
+                            hintActive: hint,
+                            levelIndex: session.context.levelIndex
+                        )
+                        .ignoresSafeArea()
+                        .id("live-stage-\(session.context.world.rawValue)-\(session.context.levelIndex)")
+
+                        VStack(spacing: 0) {
+                            topBar(session: session)
+                            Spacer(minLength: 0)
+                            controls(session: session, now: context.date)
+                        }
                     }
                 }
             }
@@ -42,7 +53,7 @@ struct CameraPlayView: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(width: 36, height: 36)
-                    .background(.white.opacity(0.14), in: Circle())
+                    .background(.black.opacity(0.35), in: Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Close")
@@ -83,33 +94,20 @@ struct CameraPlayView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(Palette.cream, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(Palette.cream.opacity(0.94), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .accessibilityIdentifier("mission-banner")
     }
 
-    private func stage(session: RoundSession, poses: [CharacterID: Pose], hint: Bool) -> some View {
-        StageView(
-            world: session.context.world,
-            poses: poses,
-            showChrome: true,
-            hintActive: hint,
-            levelIndex: session.context.levelIndex
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .padding(.horizontal, sizeClass == .regular ? 48 : 12)
-        .id("live-stage-\(session.context.world.rawValue)-\(session.context.levelIndex)")
-    }
-
     private func controls(session: RoundSession, now: Date) -> some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             HStack {
                 Text(session.context.isDaily ? "DAILY" : "LEVEL \(session.context.levelIndex + 1)")
                     .font(.system(size: 11, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(.white.opacity(0.7))
                 Spacer()
                 Text(session.context.world.title.uppercased())
                     .font(.system(size: 11, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(.white.opacity(0.7))
             }
             .padding(.horizontal, 28)
 
@@ -143,8 +141,15 @@ struct CameraPlayView: View {
             .padding(.horizontal, 28)
             .padding(.bottom, 18)
         }
-        .padding(.top, 12)
-        .background(Palette.cameraChrome)
+        .padding(.top, 16)
+        .background {
+            LinearGradient(
+                colors: [.clear, Palette.cameraChrome.opacity(0.75), Palette.cameraChrome],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea(edges: .bottom)
+        }
     }
 
     private var galleryThumb: some View {
@@ -173,17 +178,20 @@ struct CameraPlayView: View {
         let freeze = session.freeze(at: now)
         withAnimation(.easeOut(duration: 0.08)) { flash = true }
 
+        let size = CGSize(width: 900, height: 1200)
         let captureView = StageView(
             world: session.context.world,
             poses: freeze.poses,
             showChrome: false,
             hintActive: false,
-            levelIndex: session.context.levelIndex
+            levelIndex: session.context.levelIndex,
+            canvasSize: size
         )
-        .frame(width: 390, height: 560)
+        .frame(width: size.width, height: size.height)
 
         let renderer = ImageRenderer(content: captureView)
-        renderer.scale = 3
+        renderer.proposedSize = ProposedViewSize(width: size.width, height: size.height)
+        renderer.scale = 1
         let image = renderer.uiImage ?? UIImage()
 
         Task { @MainActor in

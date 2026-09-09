@@ -99,6 +99,63 @@ struct FeaturePill: View {
     }
 }
 
+struct PFNavBar: View {
+    var title: String
+    var onBack: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(action: onBack) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(Palette.ink)
+                    .frame(width: 32, height: 32)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityIdentifier("back-button")
+            .accessibilityLabel("Back")
+            Spacer()
+            Text(title)
+                .font(.pfDisplay(22))
+                .foregroundStyle(Palette.ink)
+            Spacer()
+            Color.clear.frame(width: 32, height: 32)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 10)
+    }
+}
+
+struct PFScreen<Content: View>: View {
+    var title: String
+    var onBack: () -> Void
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            PFNavBar(title: title, onBack: onBack)
+            content
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Palette.cream.ignoresSafeArea())
+    }
+}
+
+struct SceneCrop: View {
+    var name: String
+    var height: CGFloat
+    var alignment: Alignment = .bottom
+
+    var body: some View {
+        Image(name)
+            .resizable()
+            .scaledToFill()
+            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: alignment)
+            .clipped()
+    }
+}
+
 struct StarRow: View {
     var stars: Int
     var size: CGFloat = 22

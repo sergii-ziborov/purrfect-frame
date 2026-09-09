@@ -18,6 +18,8 @@ struct RootView: View {
     var body: some View {
         Group {
             switch model.screen {
+            case .intro:
+                OnboardingView()
             case .home:
                 HomeView()
             case .play:
@@ -30,8 +32,12 @@ struct RootView: View {
                 CollectionView()
             case .collectionDetail(let id):
                 CollectionDetailView(photoID: id)
+            case .ratings:
+                RatingsView()
             case .settings:
                 SettingsView()
+            case .about:
+                AboutView()
             }
         }
         .animation(.easeInOut(duration: 0.22), value: screenKey)
@@ -40,13 +46,16 @@ struct RootView: View {
 
     private var screenKey: String {
         switch model.screen {
+        case .intro: "intro"
         case .home: "home"
         case .play: "play"
         case .result: "result"
         case .worlds: "worlds"
         case .collection: "collection"
         case .collectionDetail: "photo"
+        case .ratings: "ratings"
         case .settings: "settings"
+        case .about: "about"
         }
     }
 }

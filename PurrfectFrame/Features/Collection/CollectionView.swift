@@ -6,54 +6,38 @@ struct CollectionView: View {
     private let columns = [GridItem(.adaptive(minimum: 150), spacing: 14)]
 
     var body: some View {
-        ZStack {
-            Palette.cream.ignoresSafeArea()
-            VStack(spacing: 0) {
-                HStack {
-                    Button {
-                        model.screen = .home
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(Palette.ink)
-                    }
+        PFScreen(title: "Collection", onBack: { model.screen = .home }) {
+            if model.photos.isEmpty {
+                VStack(spacing: 10) {
                     Spacer()
-                    Text("Collection")
-                        .font(.pfDisplay(22))
+                    Image(systemName: "camera.viewfinder")
+                        .font(.system(size: 40))
+                        .foregroundStyle(Palette.wood)
+                    Text("No shots yet")
+                        .font(.pfDisplay(24))
+                    Text("Funny misses belong here too.")
+                        .font(.pfScript(18))
+                        .foregroundStyle(Palette.inkSoft)
                     Spacer()
-                    Color.clear.frame(width: 18)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-
-                if model.photos.isEmpty {
-                    Spacer()
-                    VStack(spacing: 10) {
-                        Image(systemName: "camera.viewfinder")
-                            .font(.system(size: 40))
-                            .foregroundStyle(Palette.wood)
-                        Text("No shots yet")
-                            .font(.pfDisplay(24))
-                        Text("Funny misses belong here too.")
-                            .font(.pfScript(18))
-                            .foregroundStyle(Palette.inkSoft)
-                    }
-                    Spacer()
-                } else {
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(model.photos) { photo in
-                                Button {
-                                    model.screen = .collectionDetail(photo.id)
-                                } label: {
-                                    polaroidThumb(photo)
-                                }
-                                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView(showsIndicators: false) {
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(model.photos) { photo in
+                            Button {
+                                model.screen = .collectionDetail(photo.id)
+                            } label: {
+                                polaroidThumb(photo)
                             }
+                            .buttonStyle(.plain)
                         }
-                        .padding(20)
                     }
+                    .padding(20)
+                    .frame(maxWidth: 720)
+                    .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
         }
     }
@@ -64,17 +48,21 @@ struct CollectionView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(height: 150)
+                    .frame(maxWidth: .infinity, minHeight: 150, maxHeight: 150, alignment: .bottom)
                     .clipped()
             } else {
                 Rectangle().fill(Palette.creamDark).frame(height: 150)
             }
-            Text(photo.caption)
-                .font(.pfBody(12))
-                .foregroundStyle(Palette.ink)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .frame(height: 34)
+            HStack(spacing: 4) {
+                Image(systemName: photo.success ? "star.fill" : "star")
+                    .font(.system(size: 10))
+                    .foregroundStyle(photo.success ? Palette.gold : Palette.ink.opacity(0.25))
+                Text(photo.caption)
+                    .font(.pfBody(12))
+                    .foregroundStyle(Palette.ink)
+                    .lineLimit(2)
+            }
+            .frame(height: 34)
         }
         .padding(8)
         .background(Color.white)
@@ -90,25 +78,8 @@ struct CollectionDetailView: View {
 
     var body: some View {
         let photo = model.photos.first { $0.id == photoID }
-        ZStack {
-            Palette.cream.ignoresSafeArea()
-            VStack(spacing: 16) {
-                HStack {
-                    Button {
-                        model.screen = .collection
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(Palette.ink)
-                    }
-                    Spacer()
-                    Text(photo?.world.title ?? "Shot")
-                        .font(.pfDisplay(20))
-                    Spacer()
-                    Color.clear.frame(width: 18)
-                }
-                .padding(.horizontal, 20)
-
+        PFScreen(title: photo?.world.title ?? "Shot", onBack: { model.screen = .collection }) {
+            ScrollView(showsIndicators: false) {
                 if let photo {
                     VStack(spacing: 12) {
                         if let image = model.image(for: photo) {
@@ -137,9 +108,10 @@ struct CollectionDetailView: View {
                     .padding(20)
                     .background(Color.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .padding(.horizontal, 20)
+                    .padding(.bottom, 24)
                 }
-                Spacer()
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
     }
 }

@@ -5,9 +5,15 @@ final class PurrfectFrameUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testLaunchHomeAndPlay() throws {
+    private func launchApp() -> XCUIApplication {
         let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing"]
         app.launch()
+        return app
+    }
+
+    func testLaunchHomeAndPlay() throws {
+        let app = launchApp()
         XCTAssertTrue(app.staticTexts["Purrfect Frame"].waitForExistence(timeout: 5))
         saveShot("home")
         XCTAssertTrue(app.buttons["play-button"].exists)
@@ -20,8 +26,7 @@ final class PurrfectFrameUITests: XCTestCase {
     }
 
     func testWorldsAndSettings() throws {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchApp()
         XCTAssertTrue(app.buttons["play-button"].waitForExistence(timeout: 5))
         app.buttons["Worlds"].tap()
         XCTAssertTrue(app.staticTexts["Cat Café"].waitForExistence(timeout: 5))

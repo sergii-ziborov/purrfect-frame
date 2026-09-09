@@ -240,4 +240,17 @@ struct CatalogTests {
         progress.recordSuccess(level: LevelCatalog.cafe[0], stars: 1)
         #expect(progress.isLevelUnlocked(LevelCatalog.cafe[1]))
     }
+
+    @Test("Star totals add up per world")
+    func starTotals() {
+        var progress = ProgressState.fresh
+        #expect(progress.totalStars == 0)
+        #expect(progress.photographerRank == "New shutter")
+        progress.recordSuccess(level: LevelCatalog.cafe[0], stars: 3)
+        progress.recordSuccess(level: LevelCatalog.cafe[1], stars: 1)
+        #expect(progress.totalStars == 4)
+        #expect(progress.earnedStars(in: .cafe) == 4)
+        #expect(progress.possibleStars(in: .cafe) == LevelCatalog.cafe.count * 3)
+        #expect(progress.clearedLevels == 2)
+    }
 }

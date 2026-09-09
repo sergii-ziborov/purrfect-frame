@@ -425,6 +425,8 @@ struct ProgressState: Codable, Equatable, Sendable {
     var hapticsEnabled: Bool
     var soundEnabled: Bool
     var hintFlashEnabled: Bool
+    var hasSeenIntro: Bool
+    var didAskForRating: Bool
 
     static let fresh = ProgressState(
         starsByLevel: [:],
@@ -436,13 +438,16 @@ struct ProgressState: Codable, Equatable, Sendable {
         owlCompletions: 0,
         hapticsEnabled: true,
         soundEnabled: true,
-        hintFlashEnabled: false
+        hintFlashEnabled: false,
+        hasSeenIntro: false,
+        didAskForRating: false
     )
 
     enum CodingKeys: String, CodingKey {
         case starsByLevel, cafeCompletions, penguinCompletions
         case dogCompletions, rabbitCompletions, foxCompletions, owlCompletions
         case hapticsEnabled, soundEnabled, hintFlashEnabled
+        case hasSeenIntro, didAskForRating
     }
 
     init(
@@ -455,7 +460,9 @@ struct ProgressState: Codable, Equatable, Sendable {
         owlCompletions: Int,
         hapticsEnabled: Bool,
         soundEnabled: Bool,
-        hintFlashEnabled: Bool
+        hintFlashEnabled: Bool,
+        hasSeenIntro: Bool,
+        didAskForRating: Bool
     ) {
         self.starsByLevel = starsByLevel
         self.cafeCompletions = cafeCompletions
@@ -467,6 +474,8 @@ struct ProgressState: Codable, Equatable, Sendable {
         self.hapticsEnabled = hapticsEnabled
         self.soundEnabled = soundEnabled
         self.hintFlashEnabled = hintFlashEnabled
+        self.hasSeenIntro = hasSeenIntro
+        self.didAskForRating = didAskForRating
     }
 
     init(from decoder: Decoder) throws {
@@ -481,10 +490,42 @@ struct ProgressState: Codable, Equatable, Sendable {
         hapticsEnabled = try c.decodeIfPresent(Bool.self, forKey: .hapticsEnabled) ?? true
         soundEnabled = try c.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? true
         hintFlashEnabled = try c.decodeIfPresent(Bool.self, forKey: .hintFlashEnabled) ?? false
+        let hadProgress = !starsByLevel.isEmpty || cafeCompletions > 0
+        hasSeenIntro = try c.decodeIfPresent(Bool.self, forKey: .hasSeenIntro) ?? hadProgress
+        didAskForRating = try c.decodeIfPresent(Bool.self, forKey: .didAskForRating) ?? false
     }
 
     func stars(for levelID: String) -> Int {
         starsByLevel[levelID, default: 0]
+    }
+
+    var totalStars: Int { starsByLevel.values.reduce(0, +) }
+
+    func earnedStars(in world: WorldID) -> Int {
+        LevelCatalog.levels(for: world).reduce(0) { $0 + stars(for: $1.id) }
+    }
+
+    func possibleStars(in world: WorldID) -> Int {
+        LevelCatalog.levels(for: world).count * 3
+    }
+
+    var possibleStars: Int {
+        WorldID.allCases.reduce(0) { $0 + possibleStars(in: $1) }
+    }
+
+    var clearedLevels: Int {
+        starsByLevel.values.filter { $0 > 0 }.count
+    }
+
+    var photographerRank: String {
+        guard possibleStars > 0, totalStars > 0 else { return "New shutter" }
+        let ratio = Double(totalStars) / Double(possibleStars)
+        switch ratio {
+        case ..<0.12: return "Rookie"
+        case ..<0.35: return "Regular"
+        case ..<0.65: return "Sharpshooter"
+        default: return "Gallery"
+        }
     }
 
     var penguinsUnlocked: Bool { cafeCompletions >= 2 }
