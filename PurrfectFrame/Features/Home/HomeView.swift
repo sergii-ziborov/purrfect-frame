@@ -5,37 +5,30 @@ struct HomeView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
-        GeometryReader { geo in
-            let short = geo.size.height < 720
-            let next = LevelCatalog.nextPlayable(progress: model.progress)
-            let level = LevelCatalog.level(world: next.world, index: next.index)
+        let next = LevelCatalog.nextPlayable(progress: model.progress)
+        let level = LevelCatalog.level(world: next.world, index: next.index)
 
-            ZStack(alignment: .top) {
-                Palette.cream.ignoresSafeArea()
-                Image("CafeBackground")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
-                    .clipped()
-                    .opacity(0.16)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
+        ZStack {
+            Palette.cream.ignoresSafeArea()
+            Image("CafeBackground")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+                .opacity(0.14)
+                .allowsHitTesting(false)
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: short ? 12 : 16) {
-                        header
-                        playCard(level: level, short: short)
-                        destRow
-                        dailyRow
-                        ratingsStrip
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, short ? 8 : 14)
-                    .padding(.bottom, 20)
-                    .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
-                    .frame(maxWidth: .infinity)
-                }
+            VStack(spacing: 12) {
+                header
+                playCard(level: level)
+                    .frame(maxHeight: .infinity)
+                dailyRow
+                destRow
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 6)
+            .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -54,7 +47,25 @@ struct HomeView: View {
                     .font(.pfBody(12))
                     .foregroundStyle(Palette.wood)
             }
-            Spacer()
+            Spacer(minLength: 8)
+            Button {
+                model.screen = .ratings
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .foregroundStyle(Palette.gold)
+                    Text("\(model.progress.totalStars)")
+                        .font(.pfBody(14))
+                        .foregroundStyle(Palette.ink)
+                }
+                .padding(.horizontal, 10)
+                .frame(height: 40)
+                .background(Color.white.opacity(0.9), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Ratings")
+            .accessibilityIdentifier("Ratings")
+
             Button {
                 model.screen = .settings
             } label: {
@@ -62,7 +73,7 @@ struct HomeView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Palette.ink)
                     .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.88), in: Circle())
+                    .background(Color.white.opacity(0.9), in: Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Settings")
@@ -70,59 +81,59 @@ struct HomeView: View {
         }
     }
 
-    private func playCard(level: LevelDefinition, short: Bool) -> some View {
-        let previewHeight: CGFloat = short ? 210 : 248
-        return Button {
+    private func playCard(level: LevelDefinition) -> some View {
+        Button {
             model.playTapped()
         } label: {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(spacing: 0) {
                 TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
                     let now = context.date.timeIntervalSinceReferenceDate
-                    ZStack(alignment: .bottom) {
-                        Image(level.world.background(for: level.index))
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity, minHeight: previewHeight, maxHeight: previewHeight, alignment: .top)
-                            .clipped()
+                    GeometryReader { geo in
+                        let scale = min(geo.size.width / 390, geo.size.height / 260)
+                        ZStack(alignment: .bottom) {
+                            Image(level.world.background(for: level.index))
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+                                .clipped()
 
-                        LinearGradient(
-                            colors: [.clear, .black.opacity(0.18), .black.opacity(0.62)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+                            LinearGradient(
+                                colors: [.clear, .clear, .black.opacity(0.55)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
 
-                        HStack(alignment: .bottom, spacing: -10) {
-                            ForEach(Array(level.cast.enumerated()), id: \.element.id) { index, id in
-                                CreatureView(
-                                    id: id,
-                                    pose: IdleMotion.pose(id: id, at: now, index: index)
-                                )
-                                .scaleEffect(short ? 0.40 : 0.46)
-                                .frame(width: short ? 74 : 84, height: short ? 92 : 104)
+                            HStack(alignment: .bottom, spacing: -12) {
+                                ForEach(Array(level.cast.enumerated()), id: \.element.id) { index, id in
+                                    CreatureView(
+                                        id: id,
+                                        pose: IdleMotion.pose(id: id, at: now, index: index)
+                                    )
+                                    .scaleEffect(0.48 * max(scale, 0.72))
+                                    .frame(width: 86 * max(scale, 0.72), height: 108 * max(scale, 0.72))
+                                }
                             }
-                        }
-                        .padding(.bottom, 58)
+                            .padding(.bottom, 56)
 
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(level.world.title.uppercased())
-                                .font(.system(size: 11, weight: .heavy, design: .rounded))
-                                .tracking(1.1)
-                                .foregroundStyle(.white.opacity(0.82))
-                            Text("Level \(level.index + 1)")
-                                .font(.pfDisplay(24))
-                                .foregroundStyle(.white)
-                            Text(level.mission.prompt)
-                                .font(.pfBody(14))
-                                .foregroundStyle(.white.opacity(0.92))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(level.world.title.uppercased())
+                                    .font(.system(size: 11, weight: .heavy, design: .rounded))
+                                    .tracking(1.1)
+                                    .foregroundStyle(.white.opacity(0.82))
+                                Text("Level \(level.index + 1)")
+                                    .font(.pfDisplay(24))
+                                    .foregroundStyle(.white)
+                                Text(level.mission.prompt)
+                                    .font(.pfBody(14))
+                                    .foregroundStyle(.white.opacity(0.94))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(height: previewHeight)
-                    .clipped()
                 }
 
                 HStack {
@@ -165,7 +176,7 @@ struct HomeView: View {
             .foregroundStyle(Palette.ink)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(Color.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(title)
@@ -187,46 +198,9 @@ struct HomeView: View {
             .foregroundStyle(Palette.wood)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(Color.white.opacity(0.84), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("daily-button")
-    }
-
-    private var ratingsStrip: some View {
-        Button {
-            model.screen = .ratings
-        } label: {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Stars")
-                        .font(.system(size: 11, weight: .heavy, design: .rounded))
-                        .foregroundStyle(Palette.inkSoft)
-                    HStack(spacing: 4) {
-                        Image(systemName: "star.fill")
-                            .foregroundStyle(Palette.gold)
-                        Text("\(model.progress.totalStars)")
-                            .font(.pfDisplay(22))
-                            .foregroundStyle(Palette.ink)
-                        Text("/ \(model.progress.possibleStars)")
-                            .font(.pfBody(13))
-                            .foregroundStyle(Palette.inkSoft)
-                    }
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Shots")
-                        .font(.system(size: 11, weight: .heavy, design: .rounded))
-                        .foregroundStyle(Palette.inkSoft)
-                    Text("\(model.photos.count)")
-                        .font(.pfDisplay(22))
-                        .foregroundStyle(Palette.ink)
-                }
-            }
-            .padding(16)
-            .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Ratings")
     }
 }
