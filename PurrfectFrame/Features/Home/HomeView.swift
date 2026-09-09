@@ -20,22 +20,18 @@ struct HomeView: View {
             .clipped()
             .ignoresSafeArea()
             .overlay {
-                GeometryReader { geo in
-                    let playHeight = min(geo.size.height * 0.46, 300)
-                    VStack(spacing: 12) {
-                        header
-                        playCard(level: level)
-                            .frame(height: playHeight)
-                        Spacer(minLength: 8)
-                        dailyRow
-                        destRow
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-                    .padding(.bottom, 18)
-                    .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
-                    .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+                VStack(spacing: 12) {
+                    header
+                    playCard(level: level)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    dailyRow
+                    destRow
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
+                .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .clipped()
     }
@@ -99,12 +95,14 @@ struct HomeView: View {
                 TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
                     let now = context.date.timeIntervalSinceReferenceDate
                     GeometryReader { geo in
-                        let animal = min(geo.size.width / 560, geo.size.height / 340, 0.52)
+                        let animal = min(geo.size.width / 520, geo.size.height / 320, 0.5)
                         ZStack(alignment: .bottom) {
-                            Image(level.world.background(for: level.index))
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+                            Color.clear
+                                .overlay {
+                                    Image(level.world.background(for: level.index))
+                                        .resizable()
+                                        .scaledToFill()
+                                }
                                 .clipped()
 
                             LinearGradient(
@@ -121,7 +119,6 @@ struct HomeView: View {
                                     )
                                     .scaleEffect(animal)
                                     .frame(width: 200 * animal, height: 230 * animal)
-                                    .clipped()
                                 }
                             }
                             .padding(.bottom, 52)
@@ -144,9 +141,11 @@ struct HomeView: View {
                             .padding(.bottom, 12)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .frame(width: geo.size.width, height: geo.size.height)
                         .clipped()
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
 
                 HStack {
