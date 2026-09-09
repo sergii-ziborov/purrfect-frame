@@ -12,7 +12,7 @@ struct Channel: Equatable, Sendable {
         Channel(keys: [Key(time: 0, value: value)])
     }
 
-    mutating func addHold(_ range: ClosedRange<TimeInterval>, value: Double, ease: TimeInterval = 0.16) {
+    mutating func addHold(_ range: ClosedRange<TimeInterval>, value: Double, ease: TimeInterval = 0.28) {
         keys.append(Key(time: max(0, range.lowerBound - ease), value: value))
         keys.append(Key(time: range.lowerBound, value: value))
         keys.append(Key(time: range.upperBound, value: value))
@@ -126,7 +126,7 @@ struct RoundTimeline: Equatable, Sendable {
         var poses: [CharacterID: Pose] = [:]
         poses.reserveCapacity(cast.count)
         for (index, id) in cast.enumerated() {
-            let breath = 0.5 + 0.5 * sin(time * 2.35 + Double(index) * 1.1)
+            let breath = 0.5 + 0.5 * sin(time * 1.35 + Double(index) * 1.1)
             poses[id] = clips[id]?.pose(at: time, loop: loopDuration, breath: breath) ?? .cameraReady
         }
         return poses
@@ -147,13 +147,13 @@ enum EventKind {
 
     var duration: TimeInterval {
         switch self {
-        case .blink: 0.28
-        case .turn: 1.35
-        case .jump: 0.72
-        case .cover: 0.95
-        case .yawn: 1.05
-        case .paw: 0.85
-        case .derp: 0.70
+        case .blink: 0.62
+        case .turn: 1.85
+        case .jump: 1.05
+        case .cover: 1.35
+        case .yawn: 1.55
+        case .paw: 1.20
+        case .derp: 1.00
         }
     }
 }
@@ -169,8 +169,8 @@ enum RoundScheme: String, CaseIterable, Sendable {
 }
 
 enum TimelineBuilder {
-    static let loopDuration: TimeInterval = 11.0
-    static let introEnd: TimeInterval = 0.62
+    static let loopDuration: TimeInterval = 16.0
+    static let introEnd: TimeInterval = 1.05
 
     static func build(
         mission: Mission,
@@ -183,7 +183,7 @@ enum TimelineBuilder {
         let latestStart = loopDuration - windowDuration - 1.15
         let windowStart = rng.next(in: 2.15...max(2.15, latestStart))
         let window = windowStart...(windowStart + windowDuration)
-        let forbidden = (window.lowerBound - 0.42)...(window.upperBound + 0.42)
+        let forbidden = (window.lowerBound - 0.55)...(window.upperBound + 0.55)
 
         let success = successPoses(mission: mission, cast: cast, rng: &rng)
         var clips: [CharacterID: CharacterClip] = [:]
@@ -304,12 +304,12 @@ enum TimelineBuilder {
         mission: Mission,
         scheme: RoundScheme
     ) -> [EventKind] {
-        var pool: [EventKind] = [.blink, .blink, .turn, .jump, .cover, .yawn, .paw, .derp]
+        var pool: [EventKind] = [.turn, .jump, .cover, .yawn, .paw, .derp, .blink]
         switch personality {
-        case .blinker: pool += [.blink, .blink, .blink, .yawn]
-        case .turner: pool += [.turn, .turn, .derp]
-        case .jumper: pool += [.jump, .jump, .paw]
-        case .coverer: pool += [.cover, .cover, .paw]
+        case .blinker: pool += [.blink, .yawn]
+        case .turner: pool += [.turn, .derp]
+        case .jumper: pool += [.jump, .paw]
+        case .coverer: pool += [.cover, .paw]
         }
         switch mission {
         case .allLooking: pool += [.turn, .blink, .cover, .derp]
@@ -344,7 +344,7 @@ enum TimelineBuilder {
     ) {
         switch kind {
         case .blink:
-            blink.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.06)
+            blink.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.18)
         case .turn:
             facing.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.45)
         case .jump:

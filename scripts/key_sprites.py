@@ -76,7 +76,49 @@ SPRITES = {
     "PebbleYawn": "54.jpg",
     "PebbleDerp": "66.jpg",
     "PebblePaw": "63.jpg",
+    "BiscuitIdle": "78.jpg",
+    "BiscuitBlink": "84.jpg",
+    "BiscuitTurn": "86.jpg",
+    "BiscuitJump": "98.jpg",
+    "BiscuitYawn": "101.jpg",
+    "PepperIdle": "79.jpg",
+    "PepperBlink": "85.jpg",
+    "PepperTurn": "83.jpg",
+    "PepperJump": "95.jpg",
+    "MapleIdle": "76.jpg",
+    "MapleBlink": "88.jpg",
+    "MapleTurn": "89.jpg",
+    "MapleJump": "94.jpg",
+    "MaplePaw": "97.jpg",
+    "ScoutIdle": "75.jpg",
+    "ScoutBlink": "82.jpg",
+    "ScoutTurn": "87.jpg",
+    "ScoutJump": "91.jpg",
+    "CloverIdle": "77.jpg",
+    "CloverBlink": "90.jpg",
+    "CloverTurn": "100.jpg",
+    "CloverJump": "99.jpg",
+    "HazelIdle": "74.jpg",
+    "HazelBlink": "92.jpg",
+    "HazelTurn": "102.jpg",
+    "FigIdle": "80.jpg",
+    "FigBlink": "93.jpg",
+    "FigJump": "96.jpg",
+    "ThistleIdle": "81.jpg",
 }
+
+BACKGROUNDS = {
+    "CafeNight": "68.jpg",
+    "CafeGarden": "69.jpg",
+    "PenguinIce": "71.jpg",
+    "DogStudio": "67.jpg",
+    "DogPark": "72.jpg",
+    "RabbitGarden": "70.jpg",
+    "RabbitBurrow": "73.jpg",
+}
+
+POSES = ["Idle", "Blink", "Turn", "Jump", "Cover", "Yawn", "Derp", "Paw"]
+NEW_CAST = ["Biscuit", "Pepper", "Maple", "Scout", "Clover", "Hazel", "Fig", "Thistle"]
 
 
 def key_magenta(path: Path) -> Image.Image:
@@ -152,6 +194,39 @@ def main() -> None:
         write_imageset(name, png)
         written.append(name)
         print(f"OK {name} {png.stat().st_size}")
+    for who in NEW_CAST:
+        idle = staged / f"{who}Idle.png"
+        if not idle.exists():
+            continue
+        for pose in POSES:
+            name = f"{who}{pose}"
+            dest_png = staged / f"{name}.png"
+            if dest_png.exists() and dest_png.stat().st_size > 1000:
+                continue
+            shutil.copyfile(idle, dest_png)
+            write_imageset(name, dest_png)
+            written.append(name + "(idle-fill)")
+            print(f"FILL {name}")
+    for name, src in BACKGROUNDS.items():
+        src_path = IMG / src
+        if not src_path.exists():
+            print(f"SKIP bg {name}")
+            continue
+        folder = ASSETS / f"{name}.imageset"
+        folder.mkdir(parents=True, exist_ok=True)
+        dest = folder / f"{name}.jpg"
+        shutil.copyfile(src_path, dest)
+        (folder / "Contents.json").write_text(
+            json.dumps(
+                {
+                    "images": [{"filename": f"{name}.jpg", "idiom": "universal"}],
+                    "info": {"author": "xcode", "version": 1},
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        print(f"BG {name}")
     print(f"wrote {len(written)} sprites")
 
 

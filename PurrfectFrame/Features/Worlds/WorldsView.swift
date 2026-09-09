@@ -82,7 +82,7 @@ struct WorldsView: View {
                             .foregroundStyle(Palette.inkSoft)
                         Spacer()
                         if !unlocked {
-                            Label("Clear 4 café shots", systemImage: "lock.fill")
+                            Label(lockHint(world), systemImage: "lock.fill")
                                 .font(.pfBody(12))
                                 .foregroundStyle(Palette.inkSoft)
                         }
@@ -135,5 +135,14 @@ struct WorldsView: View {
         }
         .buttonStyle(.plain)
         .disabled(!open)
+    }
+
+    private func lockHint(_ world: WorldID) -> String {
+        switch world {
+        case .cafe: "Open"
+        case .penguins: "Clear 4 café shots"
+        case .dogs: "Clear 3 penguin shots"
+        case .rabbits: "Clear 3 dog shots"
+        }
     }
 }

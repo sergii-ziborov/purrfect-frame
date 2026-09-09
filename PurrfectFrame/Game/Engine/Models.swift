@@ -4,11 +4,15 @@ import SwiftUI
 enum Species: String, Codable, CaseIterable, Sendable {
     case cat
     case penguin
+    case dog
+    case rabbit
 }
 
 enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
     case cafe
     case penguins
+    case dogs
+    case rabbits
 
     var id: String { rawValue }
 
@@ -16,6 +20,8 @@ enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
         switch self {
         case .cafe: "Cat Café"
         case .penguins: "Penguin Parade"
+        case .dogs: "Dog Studio"
+        case .rabbits: "Rabbit Garden"
         }
     }
 
@@ -23,6 +29,8 @@ enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
         switch self {
         case .cafe: "Warm light, worse timing."
         case .penguins: "One silhouette. Many opinions."
+        case .dogs: "Good dogs. Terrible timing."
+        case .rabbits: "Stillness is a rumour."
         }
     }
 
@@ -30,13 +38,32 @@ enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
         switch self {
         case .cafe: .cat
         case .penguins: .penguin
+        case .dogs: .dog
+        case .rabbits: .rabbit
         }
     }
 
-    var backgroundAsset: String {
+    var backgrounds: [String] {
         switch self {
-        case .cafe: "CafeBackground"
-        case .penguins: "PenguinBackground"
+        case .cafe: ["CafeBackground", "CafeNight", "CafeGarden"]
+        case .penguins: ["PenguinBackground", "PenguinIce"]
+        case .dogs: ["DogStudio", "DogPark"]
+        case .rabbits: ["RabbitGarden", "RabbitBurrow"]
+        }
+    }
+
+    var backgroundAsset: String { backgrounds[0] }
+
+    func background(for levelIndex: Int) -> String {
+        backgrounds[abs(levelIndex) % backgrounds.count]
+    }
+
+    var caption: String {
+        switch self {
+        case .cafe: "LIFE IS BETTER WITH CATS"
+        case .penguins: "HUDDLE UP"
+        case .dogs: "WHO'S A GOOD SHOT"
+        case .rabbits: "QUIET, PLEASE"
         }
     }
 }
@@ -44,6 +71,8 @@ enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
 enum CharacterID: String, Codable, CaseIterable, Identifiable, Sendable {
     case mochi, nori, butter, ink
     case pip, waddle, scoop, pebble
+    case biscuit, pepper, maple, scout
+    case clover, hazel, fig, thistle
 
     var id: String { rawValue }
 
@@ -55,15 +84,17 @@ enum CharacterID: String, Codable, CaseIterable, Identifiable, Sendable {
         switch self {
         case .mochi, .nori, .butter, .ink: .cat
         case .pip, .waddle, .scoop, .pebble: .penguin
+        case .biscuit, .pepper, .maple, .scout: .dog
+        case .clover, .hazel, .fig, .thistle: .rabbit
         }
     }
 
     var personality: Personality {
         switch self {
-        case .nori, .pip: .blinker
-        case .mochi, .pebble: .turner
-        case .butter, .scoop: .jumper
-        case .ink, .waddle: .coverer
+        case .nori, .pip, .biscuit, .clover: .blinker
+        case .mochi, .pebble, .scout, .hazel: .turner
+        case .butter, .scoop, .maple, .fig: .jumper
+        case .ink, .waddle, .pepper, .thistle: .coverer
         }
     }
 
@@ -73,17 +104,23 @@ enum CharacterID: String, Codable, CaseIterable, Identifiable, Sendable {
         case .waddle: .pip
         case .mochi: .butter
         case .scoop: .pebble
+        case .pepper: .biscuit
+        case .thistle: .clover
         default: nil
         }
     }
 
     static let cafeCast: [CharacterID] = [.mochi, .nori, .butter, .ink]
     static let penguinCast: [CharacterID] = [.pip, .waddle, .scoop, .pebble]
+    static let dogCast: [CharacterID] = [.biscuit, .pepper, .maple, .scout]
+    static let rabbitCast: [CharacterID] = [.clover, .hazel, .fig, .thistle]
 
     static func cast(for world: WorldID) -> [CharacterID] {
         switch world {
         case .cafe: cafeCast
         case .penguins: penguinCast
+        case .dogs: dogCast
+        case .rabbits: rabbitCast
         }
     }
 }
@@ -220,6 +257,34 @@ enum LevelCatalog {
         ]
     )
 
+    static let dogs: [LevelDefinition] = make(
+        world: .dogs,
+        missions: [
+            (.allLooking, .easy),
+            (.nobodyBlinking, .easy),
+            (.catchWave(.biscuit), .medium),
+            (.noOverlap, .medium),
+            (.twoJumping, .medium),
+            (.catchJumper(.maple), .medium),
+            (.allStill, .hard),
+            (.nobodyYawning, .hard),
+        ]
+    )
+
+    static let rabbits: [LevelDefinition] = make(
+        world: .rabbits,
+        missions: [
+            (.allLooking, .easy),
+            (.nobodyBlinking, .easy),
+            (.noOverlap, .medium),
+            (.catchYawn(.clover), .medium),
+            (.twoJumping, .medium),
+            (.catchWave(.hazel), .hard),
+            (.allLooking, .hard),
+            (.nobodyYawning, .hard),
+        ]
+    )
+
     static let penguins: [LevelDefinition] = make(
         world: .penguins,
         missions: [
@@ -242,6 +307,8 @@ enum LevelCatalog {
         switch world {
         case .cafe: cafe
         case .penguins: penguins
+        case .dogs: dogs
+        case .rabbits: rabbits
         }
     }
 
@@ -256,6 +323,12 @@ enum LevelCatalog {
         }
         if progress.penguinsUnlocked, let penguins = firstIncomplete(world: .penguins, progress: progress) {
             return (.penguins, penguins)
+        }
+        if progress.dogsUnlocked, let dogs = firstIncomplete(world: .dogs, progress: progress) {
+            return (.dogs, dogs)
+        }
+        if progress.rabbitsUnlocked, let rabbits = firstIncomplete(world: .rabbits, progress: progress) {
+            return (.rabbits, rabbits)
         }
         return (.cafe, max(0, cafe.count - 1))
     }
@@ -279,6 +352,8 @@ struct ProgressState: Codable, Equatable, Sendable {
     var starsByLevel: [String: Int]
     var cafeCompletions: Int
     var penguinCompletions: Int
+    var dogCompletions: Int
+    var rabbitCompletions: Int
     var hapticsEnabled: Bool
     var soundEnabled: Bool
     var hintFlashEnabled: Bool
@@ -287,18 +362,58 @@ struct ProgressState: Codable, Equatable, Sendable {
         starsByLevel: [:],
         cafeCompletions: 0,
         penguinCompletions: 0,
+        dogCompletions: 0,
+        rabbitCompletions: 0,
         hapticsEnabled: true,
         soundEnabled: true,
         hintFlashEnabled: false
     )
 
+    enum CodingKeys: String, CodingKey {
+        case starsByLevel, cafeCompletions, penguinCompletions
+        case dogCompletions, rabbitCompletions
+        case hapticsEnabled, soundEnabled, hintFlashEnabled
+    }
+
+    init(
+        starsByLevel: [String: Int],
+        cafeCompletions: Int,
+        penguinCompletions: Int,
+        dogCompletions: Int,
+        rabbitCompletions: Int,
+        hapticsEnabled: Bool,
+        soundEnabled: Bool,
+        hintFlashEnabled: Bool
+    ) {
+        self.starsByLevel = starsByLevel
+        self.cafeCompletions = cafeCompletions
+        self.penguinCompletions = penguinCompletions
+        self.dogCompletions = dogCompletions
+        self.rabbitCompletions = rabbitCompletions
+        self.hapticsEnabled = hapticsEnabled
+        self.soundEnabled = soundEnabled
+        self.hintFlashEnabled = hintFlashEnabled
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        starsByLevel = try c.decodeIfPresent([String: Int].self, forKey: .starsByLevel) ?? [:]
+        cafeCompletions = try c.decodeIfPresent(Int.self, forKey: .cafeCompletions) ?? 0
+        penguinCompletions = try c.decodeIfPresent(Int.self, forKey: .penguinCompletions) ?? 0
+        dogCompletions = try c.decodeIfPresent(Int.self, forKey: .dogCompletions) ?? 0
+        rabbitCompletions = try c.decodeIfPresent(Int.self, forKey: .rabbitCompletions) ?? 0
+        hapticsEnabled = try c.decodeIfPresent(Bool.self, forKey: .hapticsEnabled) ?? true
+        soundEnabled = try c.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? true
+        hintFlashEnabled = try c.decodeIfPresent(Bool.self, forKey: .hintFlashEnabled) ?? false
+    }
+
     func stars(for levelID: String) -> Int {
         starsByLevel[levelID, default: 0]
     }
 
-    var penguinsUnlocked: Bool {
-        cafeCompletions >= 4
-    }
+    var penguinsUnlocked: Bool { cafeCompletions >= 4 }
+    var dogsUnlocked: Bool { penguinCompletions >= 3 || cafeCompletions >= 8 }
+    var rabbitsUnlocked: Bool { dogCompletions >= 3 }
 
     mutating func recordSuccess(level: LevelDefinition, stars: Int) {
         let previous = starsByLevel[level.id, default: 0]
@@ -307,6 +422,8 @@ struct ProgressState: Codable, Equatable, Sendable {
             switch level.world {
             case .cafe: cafeCompletions += 1
             case .penguins: penguinCompletions += 1
+            case .dogs: dogCompletions += 1
+            case .rabbits: rabbitCompletions += 1
             }
         }
     }
@@ -315,6 +432,8 @@ struct ProgressState: Codable, Equatable, Sendable {
         switch world {
         case .cafe: true
         case .penguins: penguinsUnlocked
+        case .dogs: dogsUnlocked
+        case .rabbits: rabbitsUnlocked
         }
     }
 

@@ -69,6 +69,17 @@ extension CharacterID {
                 nose: Color(red: 0.94, green: 0.55, blue: 0.20),
                 accessory: Color(red: 0.86, green: 0.32, blue: 0.32)
             )
+        default:
+            CharacterPalette(
+                fur: Color(red: 0.62, green: 0.48, blue: 0.32),
+                furDark: Color(red: 0.42, green: 0.30, blue: 0.18),
+                furLight: Color(red: 0.86, green: 0.78, blue: 0.66),
+                belly: Color(red: 0.95, green: 0.92, blue: 0.88),
+                innerEar: Color(red: 0.94, green: 0.72, blue: 0.70),
+                iris: Color(red: 0.28, green: 0.22, blue: 0.18),
+                nose: Color(red: 0.35, green: 0.22, blue: 0.18),
+                accessory: Color(red: 0.25, green: 0.45, blue: 0.78)
+            )
         }
     }
 
@@ -79,6 +90,9 @@ extension CharacterID {
         case .scoop: 1.14
         case .waddle: 1.10
         case .pip: 0.90
+        case .pepper, .maple: 0.90
+        case .fig: 0.88
+        case .clover, .hazel: 0.94
         default: 1.0
         }
     }

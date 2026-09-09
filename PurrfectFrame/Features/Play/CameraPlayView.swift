@@ -92,7 +92,8 @@ struct CameraPlayView: View {
             world: session.context.world,
             poses: poses,
             showChrome: true,
-            hintActive: hint
+            hintActive: hint,
+            levelIndex: session.context.levelIndex
         )
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .padding(.horizontal, sizeClass == .regular ? 48 : 12)
@@ -176,7 +177,8 @@ struct CameraPlayView: View {
             world: session.context.world,
             poses: freeze.poses,
             showChrome: false,
-            hintActive: false
+            hintActive: false,
+            levelIndex: session.context.levelIndex
         )
         .frame(width: 390, height: 560)
 

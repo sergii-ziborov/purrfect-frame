@@ -49,7 +49,7 @@ struct SpriteCreatureView: View {
             return weight
         }
         let jump = take(pose.jump)
-        let cover = id.species == .cat ? take(pose.cover) : 0
+        let cover = take(pose.cover)
         let turn = take(pose.facing)
         let yawn = take(pose.yawn)
         let paw = take(pose.paw)

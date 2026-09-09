@@ -44,7 +44,10 @@ final class AppModel {
 
     func playDaily() {
         let day = Calendar.current.ordinality(of: .day, in: .era, for: Date()) ?? 1
-        let worlds: [WorldID] = progress.penguinsUnlocked ? [.cafe, .penguins] : [.cafe]
+        var worlds: [WorldID] = [.cafe]
+        if progress.penguinsUnlocked { worlds.append(.penguins) }
+        if progress.dogsUnlocked { worlds.append(.dogs) }
+        if progress.rabbitsUnlocked { worlds.append(.rabbits) }
         let world = worlds[day % worlds.count]
         let levels = LevelCatalog.levels(for: world)
         let index = day % levels.count
@@ -71,6 +74,10 @@ final class AppModel {
             startPlay(world: world, index: nextIndex, daily: false)
         } else if world == .cafe, progress.penguinsUnlocked {
             startPlay(world: .penguins, index: 0, daily: false)
+        } else if world == .penguins, progress.dogsUnlocked {
+            startPlay(world: .dogs, index: 0, daily: false)
+        } else if world == .dogs, progress.rabbitsUnlocked {
+            startPlay(world: .rabbits, index: 0, daily: false)
         } else {
             screen = .worlds
             self.session = nil
