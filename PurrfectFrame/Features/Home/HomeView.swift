@@ -20,18 +20,22 @@ struct HomeView: View {
             .clipped()
             .ignoresSafeArea()
             .overlay {
-                VStack(spacing: 10) {
-                    header
-                    playCard(level: level)
-                        .frame(maxHeight: .infinity)
-                    dailyRow
-                    destRow
+                GeometryReader { geo in
+                    let playHeight = min(geo.size.height * 0.46, 300)
+                    VStack(spacing: 12) {
+                        header
+                        playCard(level: level)
+                            .frame(height: playHeight)
+                        Spacer(minLength: 8)
+                        dailyRow
+                        destRow
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 18)
+                    .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
-                .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .clipped()
     }
@@ -185,7 +189,7 @@ struct HomeView: View {
             }
             .foregroundStyle(Palette.ink)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
+            .padding(.vertical, 12)
             .background(Color.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
