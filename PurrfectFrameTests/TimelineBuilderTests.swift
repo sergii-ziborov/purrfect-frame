@@ -179,29 +179,57 @@ struct ShotEvaluatorTests {
 }
 
 struct CatalogTests {
-    @Test("Penguins unlock after four café successes")
+    @Test("Penguins unlock after two café successes")
     func penguinUnlock() {
         var progress = ProgressState.fresh
         #expect(!progress.penguinsUnlocked)
-        for level in LevelCatalog.cafe.prefix(4) {
+        for level in LevelCatalog.cafe.prefix(2) {
             progress.recordSuccess(level: level, stars: 3)
         }
         #expect(progress.penguinsUnlocked)
+        #expect(progress.foxesUnlocked)
         #expect(progress.isLevelUnlocked(LevelCatalog.penguins[0]))
     }
 
-    @Test("Dogs unlock after three penguin successes")
+    @Test("Dogs unlock after two penguin successes")
     func dogUnlock() {
         var progress = ProgressState.fresh
-        for level in LevelCatalog.cafe.prefix(4) {
+        for level in LevelCatalog.cafe.prefix(2) {
             progress.recordSuccess(level: level, stars: 1)
         }
         #expect(!progress.dogsUnlocked)
-        for level in LevelCatalog.penguins.prefix(3) {
+        for level in LevelCatalog.penguins.prefix(2) {
             progress.recordSuccess(level: level, stars: 1)
         }
         #expect(progress.dogsUnlocked)
         #expect(progress.isUnlocked(.dogs))
+    }
+
+    @Test("Fox grove and owl library unlock from café progress")
+    func foxAndOwlUnlock() {
+        var progress = ProgressState.fresh
+        #expect(!progress.foxesUnlocked)
+        #expect(!progress.owlsUnlocked)
+        for level in LevelCatalog.cafe.prefix(2) {
+            progress.recordSuccess(level: level, stars: 1)
+        }
+        #expect(progress.foxesUnlocked)
+        for level in LevelCatalog.foxes.prefix(2) {
+            progress.recordSuccess(level: level, stars: 1)
+        }
+        #expect(progress.owlsUnlocked)
+        #expect(progress.isLevelUnlocked(LevelCatalog.owls[0]))
+    }
+
+    @Test("Each world rotates through more than one backdrop")
+    func backgroundsRotate() {
+        for world in WorldID.allCases {
+            #expect(world.backgrounds.count >= 3)
+            let first = world.background(for: 0)
+            let second = world.background(for: 1)
+            #expect(first != second)
+            #expect(world.background(for: world.backgrounds.count) == first)
+        }
     }
 
     @Test("Levels stay sequential")

@@ -12,7 +12,7 @@ struct Channel: Equatable, Sendable {
         Channel(keys: [Key(time: 0, value: value)])
     }
 
-    mutating func addHold(_ range: ClosedRange<TimeInterval>, value: Double, ease: TimeInterval = 0.28) {
+    mutating func addHold(_ range: ClosedRange<TimeInterval>, value: Double, ease: TimeInterval = 0.42) {
         keys.append(Key(time: max(0, range.lowerBound - ease), value: value))
         keys.append(Key(time: range.lowerBound, value: value))
         keys.append(Key(time: range.upperBound, value: value))
@@ -126,7 +126,7 @@ struct RoundTimeline: Equatable, Sendable {
         var poses: [CharacterID: Pose] = [:]
         poses.reserveCapacity(cast.count)
         for (index, id) in cast.enumerated() {
-            let breath = 0.5 + 0.5 * sin(time * 1.35 + Double(index) * 1.1)
+            let breath = 0.5 + 0.5 * sin(time * 0.95 + Double(index) * 1.1)
             poses[id] = clips[id]?.pose(at: time, loop: loopDuration, breath: breath) ?? .cameraReady
         }
         return poses
@@ -147,13 +147,13 @@ enum EventKind {
 
     var duration: TimeInterval {
         switch self {
-        case .blink: 0.62
-        case .turn: 1.85
-        case .jump: 1.05
-        case .cover: 1.35
-        case .yawn: 1.55
-        case .paw: 1.20
-        case .derp: 1.00
+        case .blink: 1.25
+        case .turn: 2.45
+        case .jump: 1.60
+        case .cover: 1.95
+        case .yawn: 2.25
+        case .paw: 1.80
+        case .derp: 1.55
         }
     }
 }
@@ -169,8 +169,8 @@ enum RoundScheme: String, CaseIterable, Sendable {
 }
 
 enum TimelineBuilder {
-    static let loopDuration: TimeInterval = 16.0
-    static let introEnd: TimeInterval = 1.05
+    static let loopDuration: TimeInterval = 18.0
+    static let introEnd: TimeInterval = 1.40
 
     static func build(
         mission: Mission,
@@ -344,19 +344,19 @@ enum TimelineBuilder {
     ) {
         switch kind {
         case .blink:
-            blink.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.18)
+            blink.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.52)
         case .turn:
-            facing.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.45)
+            facing.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.80)
         case .jump:
-            jump.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.12)
+            jump.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.28)
         case .cover:
-            cover.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.28)
+            cover.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.55)
         case .yawn:
-            yawn.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.28)
+            yawn.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.70)
         case .paw:
-            paw.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.22)
+            paw.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.48)
         case .derp:
-            derp.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.18)
+            derp.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.40)
         }
     }
 
@@ -377,24 +377,24 @@ enum TimelineBuilder {
         let afterIntro = introEnd + 0.2
         let beforeWindow = max(afterIntro, window.lowerBound - 1.6)
         guard beforeWindow > afterIntro + 0.3 else { return }
-        let stagger = Double(index) * 0.32
+        let stagger = Double(index) * 0.48
         switch scheme {
         case .scatter:
-            derp.addPulse(at: rng.next(in: afterIntro...beforeWindow), duration: EventKind.derp.duration, peak: 0.85, hold: 0.1)
+            derp.addPulse(at: rng.next(in: afterIntro...beforeWindow), duration: EventKind.derp.duration, peak: 0.85, hold: 0.28)
         case .blinkWave:
-            blink.addPulse(at: afterIntro + stagger, duration: EventKind.blink.duration, peak: 1, hold: 0.05)
+            blink.addPulse(at: afterIntro + stagger, duration: EventKind.blink.duration, peak: 1, hold: 0.45)
         case .turnOff:
-            facing.addPulse(at: afterIntro + stagger, duration: 1.1, peak: 1, hold: 0.3)
+            facing.addPulse(at: afterIntro + stagger, duration: EventKind.turn.duration, peak: 1, hold: 0.55)
         case .jumpRelay:
-            jump.addPulse(at: afterIntro + stagger * 1.4, duration: EventKind.jump.duration, peak: 1, hold: 0.08)
+            jump.addPulse(at: afterIntro + stagger * 1.4, duration: EventKind.jump.duration, peak: 1, hold: 0.22)
         case .yawnRipple:
-            yawn.addPulse(at: afterIntro + stagger, duration: EventKind.yawn.duration, peak: 1, hold: 0.2)
+            yawn.addPulse(at: afterIntro + stagger, duration: EventKind.yawn.duration, peak: 1, hold: 0.45)
         case .huddle:
             if index % 2 == 1 {
-                cover.addPulse(at: afterIntro + 0.15, duration: 1.1, peak: 1, hold: 0.35)
+                cover.addPulse(at: afterIntro + 0.2, duration: EventKind.cover.duration, peak: 1, hold: 0.5)
             }
         case .pawParty:
-            paw.addPulse(at: afterIntro + stagger, duration: EventKind.paw.duration, peak: 1, hold: 0.2)
+            paw.addPulse(at: afterIntro + stagger, duration: EventKind.paw.duration, peak: 1, hold: 0.4)
         }
     }
 

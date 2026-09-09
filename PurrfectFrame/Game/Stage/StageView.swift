@@ -39,6 +39,20 @@ enum StageLayout {
                 StageSlot(id: .fig, x: -0.10, y: -0.16, z: 1, scale: 0.90),
                 StageSlot(id: .thistle, x: 0.28, y: -0.14, z: 1.1, scale: 0.96),
             ]
+        case .foxes:
+            [
+                StageSlot(id: .ember, x: -0.26, y: 0.18, z: 2, scale: 0.96),
+                StageSlot(id: .rust, x: 0.24, y: 0.16, z: 3, scale: 1.0),
+                StageSlot(id: .fern, x: -0.12, y: -0.16, z: 1, scale: 0.90),
+                StageSlot(id: .soot, x: 0.28, y: -0.14, z: 1.1, scale: 0.94),
+            ]
+        case .owls:
+            [
+                StageSlot(id: .hoot, x: -0.24, y: 0.14, z: 2, scale: 0.92),
+                StageSlot(id: .velvet, x: 0.22, y: 0.16, z: 3, scale: 1.0),
+                StageSlot(id: .parchment, x: -0.10, y: -0.18, z: 1, scale: 0.88),
+                StageSlot(id: .nib, x: 0.28, y: -0.12, z: 1.2, scale: 1.04),
+            ]
         }
     }
 }
@@ -61,6 +75,7 @@ struct StageView: View {
                     .scaledToFill()
                     .frame(width: width, height: height)
                     .clipped()
+                    .id(backgroundName ?? world.background(for: levelIndex))
 
                 LinearGradient(
                     colors: [.black.opacity(0.08), .clear, .black.opacity(0.18)],

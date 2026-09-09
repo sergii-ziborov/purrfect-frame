@@ -140,9 +140,11 @@ struct WorldsView: View {
     private func lockHint(_ world: WorldID) -> String {
         switch world {
         case .cafe: "Open"
-        case .penguins: "Clear 4 café shots"
-        case .dogs: "Clear 3 penguin shots"
-        case .rabbits: "Clear 3 dog shots"
+        case .penguins: "Clear 2 café shots"
+        case .dogs: "Clear 2 penguin shots"
+        case .rabbits: "Clear 2 dog shots"
+        case .foxes: "Clear 2 café shots"
+        case .owls: "Clear 2 fox shots"
         }
     }
 }

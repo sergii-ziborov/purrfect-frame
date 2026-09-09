@@ -25,9 +25,13 @@ Tap the shutter. The game freezes that millisecond and scores it. A near-miss is
 Worlds in this release:
 
 1. **Cat Café** — expressive faces, bad timing, warm light
-2. **Penguin Parade** — one silhouette, several attitudes (unlocks after four café successes)
+2. **Penguin Parade** — one silhouette, several attitudes
+3. **Dog Studio** — good dogs, terrible timing
+4. **Rabbit Garden** — stillness is a rumour
+5. **Fox Grove** — soft steps, sudden grins
+6. **Owl Library** — wise faces, terrible blinks
 
-Characters are flat rigs (body, head, eyes, ears, paws), not photoreal fur. That is a production choice: animation has to be readable, and every round has to be *winnable*.
+Each world rotates through several painted backdrops as you move through levels. Characters are painted sprites with readable poses, and every round has to be *winnable*.
 
 ## How a round is built
 

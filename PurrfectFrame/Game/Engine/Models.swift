@@ -6,6 +6,8 @@ enum Species: String, Codable, CaseIterable, Sendable {
     case penguin
     case dog
     case rabbit
+    case fox
+    case owl
 }
 
 enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
@@ -13,6 +15,8 @@ enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
     case penguins
     case dogs
     case rabbits
+    case foxes
+    case owls
 
     var id: String { rawValue }
 
@@ -22,6 +26,8 @@ enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
         case .penguins: "Penguin Parade"
         case .dogs: "Dog Studio"
         case .rabbits: "Rabbit Garden"
+        case .foxes: "Fox Grove"
+        case .owls: "Owl Library"
         }
     }
 
@@ -31,6 +37,8 @@ enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
         case .penguins: "One silhouette. Many opinions."
         case .dogs: "Good dogs. Terrible timing."
         case .rabbits: "Stillness is a rumour."
+        case .foxes: "Soft steps. Sudden grins."
+        case .owls: "Wise faces. Terrible blinks."
         }
     }
 
@@ -40,15 +48,25 @@ enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
         case .penguins: .penguin
         case .dogs: .dog
         case .rabbits: .rabbit
+        case .foxes: .fox
+        case .owls: .owl
         }
     }
 
     var backgrounds: [String] {
         switch self {
-        case .cafe: ["CafeBackground", "CafeNight", "CafeGarden"]
-        case .penguins: ["PenguinBackground", "PenguinIce"]
-        case .dogs: ["DogStudio", "DogPark"]
-        case .rabbits: ["RabbitGarden", "RabbitBurrow"]
+        case .cafe:
+            ["CafeBackground", "CafeNight", "CafeGarden", "CafeBakery", "CafeRain", "CafeBooks"]
+        case .penguins:
+            ["PenguinBackground", "PenguinIce", "PenguinSunset", "PenguinHarbor"]
+        case .dogs:
+            ["DogStudio", "DogPark", "DogLiving", "DogBeach"]
+        case .rabbits:
+            ["RabbitGarden", "RabbitBurrow", "RabbitMeadow"]
+        case .foxes:
+            ["FoxForest", "FoxDen", "FoxSnow"]
+        case .owls:
+            ["OwlLibrary", "OwlMoon", "OwlAttic"]
         }
     }
 
@@ -64,6 +82,8 @@ enum WorldID: String, Codable, CaseIterable, Identifiable, Sendable {
         case .penguins: "HUDDLE UP"
         case .dogs: "WHO'S A GOOD SHOT"
         case .rabbits: "QUIET, PLEASE"
+        case .foxes: "LOOK BOTH WAYS"
+        case .owls: "WHO GOES THERE"
         }
     }
 }
@@ -73,6 +93,8 @@ enum CharacterID: String, Codable, CaseIterable, Identifiable, Sendable {
     case pip, waddle, scoop, pebble
     case biscuit, pepper, maple, scout
     case clover, hazel, fig, thistle
+    case ember, rust, fern, soot
+    case hoot, velvet, parchment, nib
 
     var id: String { rawValue }
 
@@ -86,15 +108,17 @@ enum CharacterID: String, Codable, CaseIterable, Identifiable, Sendable {
         case .pip, .waddle, .scoop, .pebble: .penguin
         case .biscuit, .pepper, .maple, .scout: .dog
         case .clover, .hazel, .fig, .thistle: .rabbit
+        case .ember, .rust, .fern, .soot: .fox
+        case .hoot, .velvet, .parchment, .nib: .owl
         }
     }
 
     var personality: Personality {
         switch self {
-        case .nori, .pip, .biscuit, .clover: .blinker
-        case .mochi, .pebble, .scout, .hazel: .turner
-        case .butter, .scoop, .maple, .fig: .jumper
-        case .ink, .waddle, .pepper, .thistle: .coverer
+        case .nori, .pip, .biscuit, .clover, .ember, .hoot: .blinker
+        case .mochi, .pebble, .scout, .hazel, .rust, .velvet: .turner
+        case .butter, .scoop, .maple, .fig, .fern, .parchment: .jumper
+        case .ink, .waddle, .pepper, .thistle, .soot, .nib: .coverer
         }
     }
 
@@ -106,6 +130,8 @@ enum CharacterID: String, Codable, CaseIterable, Identifiable, Sendable {
         case .scoop: .pebble
         case .pepper: .biscuit
         case .thistle: .clover
+        case .soot: .ember
+        case .nib: .hoot
         default: nil
         }
     }
@@ -114,6 +140,8 @@ enum CharacterID: String, Codable, CaseIterable, Identifiable, Sendable {
     static let penguinCast: [CharacterID] = [.pip, .waddle, .scoop, .pebble]
     static let dogCast: [CharacterID] = [.biscuit, .pepper, .maple, .scout]
     static let rabbitCast: [CharacterID] = [.clover, .hazel, .fig, .thistle]
+    static let foxCast: [CharacterID] = [.ember, .rust, .fern, .soot]
+    static let owlCast: [CharacterID] = [.hoot, .velvet, .parchment, .nib]
 
     static func cast(for world: WorldID) -> [CharacterID] {
         switch world {
@@ -121,6 +149,8 @@ enum CharacterID: String, Codable, CaseIterable, Identifiable, Sendable {
         case .penguins: penguinCast
         case .dogs: dogCast
         case .rabbits: rabbitCast
+        case .foxes: foxCast
+        case .owls: owlCast
         }
     }
 }
@@ -303,12 +333,42 @@ enum LevelCatalog {
         ]
     )
 
+    static let foxes: [LevelDefinition] = make(
+        world: .foxes,
+        missions: [
+            (.allLooking, .easy),
+            (.nobodyBlinking, .easy),
+            (.catchWave(.ember), .medium),
+            (.noOverlap, .medium),
+            (.twoJumping, .medium),
+            (.catchJumper(.fern), .medium),
+            (.allStill, .hard),
+            (.nobodyYawning, .hard),
+        ]
+    )
+
+    static let owls: [LevelDefinition] = make(
+        world: .owls,
+        missions: [
+            (.allLooking, .easy),
+            (.nobodyBlinking, .easy),
+            (.catchYawn(.hoot), .medium),
+            (.noOverlap, .medium),
+            (.twoJumping, .medium),
+            (.catchWave(.velvet), .hard),
+            (.allLooking, .hard),
+            (.nobodyYawning, .hard),
+        ]
+    )
+
     static func levels(for world: WorldID) -> [LevelDefinition] {
         switch world {
         case .cafe: cafe
         case .penguins: penguins
         case .dogs: dogs
         case .rabbits: rabbits
+        case .foxes: foxes
+        case .owls: owls
         }
     }
 
@@ -329,6 +389,12 @@ enum LevelCatalog {
         }
         if progress.rabbitsUnlocked, let rabbits = firstIncomplete(world: .rabbits, progress: progress) {
             return (.rabbits, rabbits)
+        }
+        if progress.foxesUnlocked, let foxes = firstIncomplete(world: .foxes, progress: progress) {
+            return (.foxes, foxes)
+        }
+        if progress.owlsUnlocked, let owls = firstIncomplete(world: .owls, progress: progress) {
+            return (.owls, owls)
         }
         return (.cafe, max(0, cafe.count - 1))
     }
@@ -354,6 +420,8 @@ struct ProgressState: Codable, Equatable, Sendable {
     var penguinCompletions: Int
     var dogCompletions: Int
     var rabbitCompletions: Int
+    var foxCompletions: Int
+    var owlCompletions: Int
     var hapticsEnabled: Bool
     var soundEnabled: Bool
     var hintFlashEnabled: Bool
@@ -364,6 +432,8 @@ struct ProgressState: Codable, Equatable, Sendable {
         penguinCompletions: 0,
         dogCompletions: 0,
         rabbitCompletions: 0,
+        foxCompletions: 0,
+        owlCompletions: 0,
         hapticsEnabled: true,
         soundEnabled: true,
         hintFlashEnabled: false
@@ -371,7 +441,7 @@ struct ProgressState: Codable, Equatable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case starsByLevel, cafeCompletions, penguinCompletions
-        case dogCompletions, rabbitCompletions
+        case dogCompletions, rabbitCompletions, foxCompletions, owlCompletions
         case hapticsEnabled, soundEnabled, hintFlashEnabled
     }
 
@@ -381,6 +451,8 @@ struct ProgressState: Codable, Equatable, Sendable {
         penguinCompletions: Int,
         dogCompletions: Int,
         rabbitCompletions: Int,
+        foxCompletions: Int,
+        owlCompletions: Int,
         hapticsEnabled: Bool,
         soundEnabled: Bool,
         hintFlashEnabled: Bool
@@ -390,6 +462,8 @@ struct ProgressState: Codable, Equatable, Sendable {
         self.penguinCompletions = penguinCompletions
         self.dogCompletions = dogCompletions
         self.rabbitCompletions = rabbitCompletions
+        self.foxCompletions = foxCompletions
+        self.owlCompletions = owlCompletions
         self.hapticsEnabled = hapticsEnabled
         self.soundEnabled = soundEnabled
         self.hintFlashEnabled = hintFlashEnabled
@@ -402,6 +476,8 @@ struct ProgressState: Codable, Equatable, Sendable {
         penguinCompletions = try c.decodeIfPresent(Int.self, forKey: .penguinCompletions) ?? 0
         dogCompletions = try c.decodeIfPresent(Int.self, forKey: .dogCompletions) ?? 0
         rabbitCompletions = try c.decodeIfPresent(Int.self, forKey: .rabbitCompletions) ?? 0
+        foxCompletions = try c.decodeIfPresent(Int.self, forKey: .foxCompletions) ?? 0
+        owlCompletions = try c.decodeIfPresent(Int.self, forKey: .owlCompletions) ?? 0
         hapticsEnabled = try c.decodeIfPresent(Bool.self, forKey: .hapticsEnabled) ?? true
         soundEnabled = try c.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? true
         hintFlashEnabled = try c.decodeIfPresent(Bool.self, forKey: .hintFlashEnabled) ?? false
@@ -411,9 +487,11 @@ struct ProgressState: Codable, Equatable, Sendable {
         starsByLevel[levelID, default: 0]
     }
 
-    var penguinsUnlocked: Bool { cafeCompletions >= 4 }
-    var dogsUnlocked: Bool { penguinCompletions >= 3 || cafeCompletions >= 8 }
-    var rabbitsUnlocked: Bool { dogCompletions >= 3 }
+    var penguinsUnlocked: Bool { cafeCompletions >= 2 }
+    var dogsUnlocked: Bool { penguinCompletions >= 2 || cafeCompletions >= 4 }
+    var rabbitsUnlocked: Bool { dogCompletions >= 2 || cafeCompletions >= 6 }
+    var foxesUnlocked: Bool { cafeCompletions >= 2 }
+    var owlsUnlocked: Bool { foxCompletions >= 2 || cafeCompletions >= 5 }
 
     mutating func recordSuccess(level: LevelDefinition, stars: Int) {
         let previous = starsByLevel[level.id, default: 0]
@@ -424,6 +502,8 @@ struct ProgressState: Codable, Equatable, Sendable {
             case .penguins: penguinCompletions += 1
             case .dogs: dogCompletions += 1
             case .rabbits: rabbitCompletions += 1
+            case .foxes: foxCompletions += 1
+            case .owls: owlCompletions += 1
             }
         }
     }
@@ -434,6 +514,8 @@ struct ProgressState: Codable, Equatable, Sendable {
         case .penguins: penguinsUnlocked
         case .dogs: dogsUnlocked
         case .rabbits: rabbitsUnlocked
+        case .foxes: foxesUnlocked
+        case .owls: owlsUnlocked
         }
     }
 

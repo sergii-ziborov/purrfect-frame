@@ -105,6 +105,42 @@ SPRITES = {
     "FigBlink": "93.jpg",
     "FigJump": "96.jpg",
     "ThistleIdle": "81.jpg",
+    "EmberIdle": "120.jpg",
+    "EmberBlink": "128.jpg",
+    "EmberTurn": "135.jpg",
+    "EmberJump": "141.jpg",
+    "EmberPaw": "149.jpg",
+    "RustIdle": "117.jpg",
+    "RustBlink": "126.jpg",
+    "RustTurn": "134.jpg",
+    "RustJump": "142.jpg",
+    "FernIdle": "118.jpg",
+    "FernBlink": "127.jpg",
+    "FernTurn": "133.jpg",
+    "FernJump": "144.jpg",
+    "FernYawn": "151.jpg",
+    "SootIdle": "119.jpg",
+    "SootBlink": "125.jpg",
+    "SootTurn": "136.jpg",
+    "SootJump": "143.jpg",
+    "HootIdle": "121.jpg",
+    "HootBlink": "132.jpg",
+    "HootTurn": "140.jpg",
+    "HootJump": "145.jpg",
+    "HootYawn": "150.jpg",
+    "VelvetIdle": "124.jpg",
+    "VelvetBlink": "131.jpg",
+    "VelvetTurn": "138.jpg",
+    "VelvetJump": "147.jpg",
+    "VelvetPaw": "152.jpg",
+    "ParchmentIdle": "123.jpg",
+    "ParchmentBlink": "129.jpg",
+    "ParchmentTurn": "139.jpg",
+    "ParchmentJump": "146.jpg",
+    "NibIdle": "122.jpg",
+    "NibBlink": "130.jpg",
+    "NibTurn": "137.jpg",
+    "NibJump": "148.jpg",
 }
 
 BACKGROUNDS = {
@@ -115,10 +151,27 @@ BACKGROUNDS = {
     "DogPark": "72.jpg",
     "RabbitGarden": "70.jpg",
     "RabbitBurrow": "73.jpg",
+    "CafeBakery": "108.jpg",
+    "CafeRain": "104.jpg",
+    "CafeBooks": "105.jpg",
+    "PenguinSunset": "103.jpg",
+    "PenguinHarbor": "110.jpg",
+    "DogLiving": "107.jpg",
+    "DogBeach": "106.jpg",
+    "RabbitMeadow": "109.jpg",
+    "FoxForest": "111.jpg",
+    "FoxDen": "113.jpg",
+    "FoxSnow": "112.jpg",
+    "OwlLibrary": "115.jpg",
+    "OwlMoon": "114.jpg",
+    "OwlAttic": "116.jpg",
 }
 
 POSES = ["Idle", "Blink", "Turn", "Jump", "Cover", "Yawn", "Derp", "Paw"]
-NEW_CAST = ["Biscuit", "Pepper", "Maple", "Scout", "Clover", "Hazel", "Fig", "Thistle"]
+NEW_CAST = [
+    "Biscuit", "Pepper", "Maple", "Scout", "Clover", "Hazel", "Fig", "Thistle",
+    "Ember", "Rust", "Fern", "Soot", "Hoot", "Velvet", "Parchment", "Nib",
+]
 
 
 def key_magenta(path: Path) -> Image.Image:

@@ -93,6 +93,9 @@ extension CharacterID {
         case .pepper, .maple: 0.90
         case .fig: 0.88
         case .clover, .hazel: 0.94
+        case .fern: 0.90
+        case .parchment: 0.88
+        case .nib: 1.08
         default: 1.0
         }
     }

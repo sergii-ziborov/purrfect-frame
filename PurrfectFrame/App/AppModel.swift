@@ -48,6 +48,8 @@ final class AppModel {
         if progress.penguinsUnlocked { worlds.append(.penguins) }
         if progress.dogsUnlocked { worlds.append(.dogs) }
         if progress.rabbitsUnlocked { worlds.append(.rabbits) }
+        if progress.foxesUnlocked { worlds.append(.foxes) }
+        if progress.owlsUnlocked { worlds.append(.owls) }
         let world = worlds[day % worlds.count]
         let levels = LevelCatalog.levels(for: world)
         let index = day % levels.count
@@ -78,6 +80,10 @@ final class AppModel {
             startPlay(world: .dogs, index: 0, daily: false)
         } else if world == .dogs, progress.rabbitsUnlocked {
             startPlay(world: .rabbits, index: 0, daily: false)
+        } else if world == .rabbits, progress.foxesUnlocked {
+            startPlay(world: .foxes, index: 0, daily: false)
+        } else if world == .foxes, progress.owlsUnlocked {
+            startPlay(world: .owls, index: 0, daily: false)
         } else {
             screen = .worlds
             self.session = nil

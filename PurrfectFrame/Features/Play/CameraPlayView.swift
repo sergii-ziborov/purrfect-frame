@@ -97,7 +97,7 @@ struct CameraPlayView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .padding(.horizontal, sizeClass == .regular ? 48 : 12)
-        .id("live-stage")
+        .id("live-stage-\(session.context.world.rawValue)-\(session.context.levelIndex)")
     }
 
     private func controls(session: RoundSession, now: Date) -> some View {
