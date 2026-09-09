@@ -11,11 +11,11 @@ struct SettingsView: View {
                 Section("Feel") {
                     Toggle("Haptics", isOn: $model.progress.hapticsEnabled)
                     Toggle("Shutter sound", isOn: $model.progress.soundEnabled)
-                    Toggle("Practice hint", isOn: $model.progress.hintFlashEnabled)
+                    Toggle("Green corners on NOW", isOn: $model.progress.hintFlashEnabled)
                 }
 
                 Section {
-                    Text("When Practice hint is on, the viewfinder turns green during the guaranteed good window. Off by default — the fun is catching it yourself.")
+                    Text("A big NOW! pops up when it’s a good time to tap. Turn on green corners if you want extra help.")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                 }

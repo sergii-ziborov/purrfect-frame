@@ -13,29 +13,33 @@ struct CameraPlayView: View {
                 TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: session.freeze != nil)) { context in
                     let poses = session.poses(at: context.date)
                     let elapsed = session.elapsed(at: context.date)
-                    let hint = model.progress.hintFlashEnabled && session.timeline.isDeclaredSuccessWindow(elapsed)
+                    let nowHint = session.timeline.isDeclaredSuccessWindow(elapsed)
 
-                    ZStack(alignment: .top) {
-                        StageView(
-                            world: session.context.world,
-                            poses: poses,
-                            showChrome: true,
-                            hintActive: hint,
-                            levelIndex: session.context.levelIndex
-                        )
-                        .ignoresSafeArea()
-                        .id("live-stage-\(session.context.world.rawValue)-\(session.context.levelIndex)")
+                    VStack(spacing: 0) {
+                        ZStack(alignment: .top) {
+                            StageView(
+                                world: session.context.world,
+                                poses: poses,
+                                showChrome: true,
+                                hintActive: nowHint && model.progress.hintFlashEnabled,
+                                levelIndex: session.context.levelIndex
+                            )
+                            .clipped()
+                            .id("live-stage-\(session.context.world.rawValue)-\(session.context.levelIndex)")
 
-                        VStack(spacing: 0) {
                             topBar(session: session)
-                            Spacer(minLength: 0)
-                            controls(session: session, now: context.date)
                         }
+                        .frame(maxHeight: .infinity)
+                        .clipped()
+
+                        controls(session: session, now: context.date, nowHint: nowHint)
                     }
+                    .clipped()
                 }
             }
         }
         .statusBarHidden()
+        .clipped()
         .overlay {
             if flash {
                 Color.white.opacity(0.78).ignoresSafeArea()
@@ -45,7 +49,7 @@ struct CameraPlayView: View {
     }
 
     private func topBar(session: RoundSession) -> some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             Button {
                 model.goHome()
             } label: {
@@ -58,50 +62,49 @@ struct CameraPlayView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Close")
 
-            missionBanner(session.context.level.mission, cast: session.timeline.cast)
-
+            missionBanner(session.context.level.mission)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 14)
         .padding(.top, 10)
-        .padding(.bottom, 8)
     }
 
-    private func missionBanner(_ mission: Mission, cast: [CharacterID]) -> some View {
-        HStack(spacing: 10) {
-            HStack(spacing: -6) {
-                ForEach(cast) { id in
-                    CreatureView(id: id, pose: .cameraReady)
-                        .scaleEffect(0.18)
-                        .frame(width: 30, height: 30)
-                        .clipShape(Circle())
-                        .background(Circle().fill(Color.white.opacity(0.92)))
-                }
-            }
-            VStack(alignment: .leading, spacing: 1) {
-                Text(mission.prompt.uppercased())
-                    .font(.system(size: 12, weight: .heavy, design: .rounded))
-                    .foregroundStyle(Palette.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Text(mission.hint)
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(Palette.inkSoft)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.85)
-            }
-            Spacer(minLength: 0)
+    private func missionBanner(_ mission: Mission) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(mission.prompt)
+                .font(.system(size: 14, weight: .heavy, design: .rounded))
+                .foregroundStyle(Palette.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Text(mission.hint)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundStyle(Palette.inkSoft)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(Palette.cream.opacity(0.94), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Palette.cream.opacity(0.94), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityIdentifier("mission-banner")
     }
 
-    private func controls(session: RoundSession, now: Date) -> some View {
-        VStack(spacing: 12) {
+    private func controls(session: RoundSession, now: Date, nowHint: Bool) -> some View {
+        let pulse = nowHint ? 1 + 0.06 * sin(session.elapsed(at: now) * 8) : 1.0
+        return VStack(spacing: 10) {
+            if nowHint {
+                Text("NOW!")
+                    .font(.pfDisplay(22))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 6)
+                    .background(Palette.moss, in: Capsule())
+                    .scaleEffect(pulse)
+                    .accessibilityIdentifier("now-hint")
+            }
+
             HStack {
-                Text(session.context.isDaily ? "DAILY" : "LEVEL \(session.context.levelIndex + 1)")
+                Text(session.context.isDaily ? "TODAY" : "LEVEL \(session.context.levelIndex + 1)")
                     .font(.system(size: 11, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white.opacity(0.7))
                 Spacer()
@@ -114,42 +117,32 @@ struct CameraPlayView: View {
             HStack(alignment: .center) {
                 galleryThumb
                     .frame(width: 52)
-
                 Spacer()
-
                 Button {
                     shoot(session: session, now: now)
                 } label: {
                     ZStack {
                         Circle()
-                            .stroke(.white, lineWidth: 5)
-                            .frame(width: 84, height: 84)
+                            .stroke(nowHint ? Palette.moss : .white, lineWidth: 5)
+                            .frame(width: 78, height: 78)
                         Circle()
                             .fill(.white)
-                            .frame(width: shutterPressed ? 58 : 68, height: shutterPressed ? 58 : 68)
+                            .frame(width: shutterPressed ? 52 : 62, height: shutterPressed ? 52 : 62)
                     }
+                    .scaleEffect(pulse)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Shutter")
                 .accessibilityIdentifier("shutter-button")
                 .disabled(session.freeze != nil)
-
                 Spacer()
-
                 Color.clear.frame(width: 52, height: 52)
             }
             .padding(.horizontal, 28)
-            .padding(.bottom, 18)
+            .padding(.bottom, 12)
         }
-        .padding(.top, 16)
-        .background {
-            LinearGradient(
-                colors: [.clear, Palette.cameraChrome.opacity(0.75), Palette.cameraChrome],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea(edges: .bottom)
-        }
+        .padding(.top, 10)
+        .background(Palette.cameraChrome)
     }
 
     private var galleryThumb: some View {

@@ -84,14 +84,14 @@ struct OnboardingView: View {
             Text("They will not pose for you.")
                 .font(.pfDisplay(26))
                 .foregroundStyle(Palette.ink)
-            Text("Someone blinks. Someone turns. Someone jumps. Wait for the window, then press the shutter.")
+            Text("Someone blinks. Someone jumps. Wait, then tap. A big NOW! means it’s a good time.")
                 .font(.pfBody(16))
                 .foregroundStyle(Palette.inkSoft)
                 .padding(.horizontal, 8)
             VStack(alignment: .leading, spacing: 12) {
-                tip("eye", "Eyes open, faces to the camera")
-                tip("person.2.fill", "No photobombs in the frame")
-                tip("camera.fill", "The shot you tap is the shot you keep")
+                tip("eye", "Wait until faces look at you")
+                tip("sparkles", "Tap when you see NOW!")
+                tip("camera.fill", "Funny misses stay in your album")
             }
             .padding(18)
             .background(Color.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))

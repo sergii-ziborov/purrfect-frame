@@ -22,7 +22,7 @@ struct ResultView: View {
                         StarRow(stars: outcome.evaluation.stars, size: 24)
 
                         Text(outcome.evaluation.caption)
-                            .font(.pfScript(20))
+                            .font(.pfBody(18))
                             .foregroundStyle(Palette.wood)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
@@ -63,7 +63,7 @@ struct ResultView: View {
                     .scaledToFit()
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             }
-            Text(outcome.evaluation.success ? "Purrfect!" : outcome.evaluation.title)
+            Text(outcome.evaluation.success ? "You got it!" : outcome.evaluation.title)
                 .font(.pfBody(20))
                 .foregroundStyle(Palette.ink)
                 .padding(.bottom, 8)
@@ -79,9 +79,9 @@ struct ResultView: View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(evaluation.verdicts) { verdict in
                 HStack(spacing: 10) {
-                    Image(systemName: rowOK(verdict, evaluation: evaluation) ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundStyle(rowOK(verdict, evaluation: evaluation) ? Palette.moss : Palette.coral)
-                    Text(line(for: verdict))
+                    Image(systemName: verdict.ok ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(verdict.ok ? Palette.moss : Palette.coral)
+                    Text(verdict.line)
                         .font(.pfBody(15))
                         .foregroundStyle(Palette.ink)
                     Spacer()
@@ -92,24 +92,6 @@ struct ResultView: View {
         .background(Color.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    private func rowOK(_ verdict: CharacterVerdict, evaluation: ShotEvaluation) -> Bool {
-        if !verdict.looking || !verdict.eyesOpen { return false }
-        if verdict.covering { return false }
-        if case .allStill = model.session?.context.level.mission, verdict.jumping { return false }
-        if case .catchJumper(let id) = model.session?.context.level.mission, verdict.id == id {
-            return verdict.jumping
-        }
-        return true
-    }
-
-    private func line(for verdict: CharacterVerdict) -> String {
-        if verdict.covering { return "\(verdict.id.displayName) photobombed the shot" }
-        if !verdict.eyesOpen { return "\(verdict.id.displayName) blinked" }
-        if !verdict.looking { return "\(verdict.id.displayName) looked away" }
-        if verdict.jumping { return "\(verdict.id.displayName) jumped" }
-        return "\(verdict.id.displayName) looking"
-    }
-
     private func buttons(session: RoundSession, outcome: ShotOutcome) -> some View {
         VStack(spacing: 10) {
             if outcome.evaluation.success {
@@ -118,7 +100,7 @@ struct ResultView: View {
                 }
                 .accessibilityIdentifier("next-level-button")
             } else {
-                PFButton(title: "Try again", kind: .play, icon: "camera.fill") {
+                PFButton(title: "Try again!", kind: .play, icon: "camera.fill") {
                     model.retry()
                 }
                 .accessibilityIdentifier("retry-button")

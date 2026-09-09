@@ -164,6 +164,31 @@ struct ShotEvaluatorTests {
         #expect(hit.success)
     }
 
+    @Test("A two-jump miss is not all green")
+    func twoJumpingMissMarksSitters() {
+        var poses: [CharacterID: Pose] = [:]
+        for id in CharacterID.cafeCast {
+            poses[id] = .cameraReady
+        }
+        poses[.butter]?.jump = 1
+        let miss = ShotEvaluator.evaluate(mission: .twoJumping, poses: poses, cast: CharacterID.cafeCast)
+        #expect(!miss.success)
+        #expect(miss.verdicts.contains { !$0.ok })
+        #expect(miss.caption.contains("jumping"))
+    }
+
+    @Test("A yawn miss is not all green")
+    func yawnMissMarksTarget() {
+        var poses: [CharacterID: Pose] = [:]
+        for id in CharacterID.cafeCast {
+            poses[id] = .cameraReady
+        }
+        let miss = ShotEvaluator.evaluate(mission: .catchYawn(.nori), poses: poses, cast: CharacterID.cafeCast)
+        #expect(!miss.success)
+        #expect(miss.verdicts.first { $0.id == .nori }?.ok == false)
+        #expect(miss.caption.contains("Nori"))
+    }
+
     @Test("Catch jumper requires that character in the air")
     func catchJumper() {
         var poses: [CharacterID: Pose] = [:]

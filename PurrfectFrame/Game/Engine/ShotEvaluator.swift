@@ -6,81 +6,66 @@ enum ShotEvaluator {
         poses: [CharacterID: Pose],
         cast: [CharacterID]
     ) -> ShotEvaluation {
-        let verdicts = cast.map { id -> CharacterVerdict in
-            let pose = poses[id] ?? .cameraReady
-            return CharacterVerdict(
-                id: id,
-                looking: pose.isLooking,
-                eyesOpen: pose.eyesOpen,
-                jumping: pose.isJumping,
-                covering: pose.isCovering
-            )
-        }
-
         var notes: [String] = []
         var misses = 0
 
-        let lookingCount = verdicts.filter(\.looking).count
-        let openCount = verdicts.filter(\.eyesOpen).count
-        let jumpCount = verdicts.filter(\.jumping).count
-        let coverCount = verdicts.filter(\.covering).count
-
         switch mission {
         case .allLooking:
-            misses += addLookingNotes(verdicts, into: &notes)
-            misses += addBlinkNotes(verdicts, into: &notes)
-            misses += addCoverNotes(verdicts, into: &notes)
+            misses += lookingMisses(poses, cast: cast, into: &notes)
+            misses += blinkMisses(poses, cast: cast, into: &notes)
+            misses += coverMisses(poses, cast: cast, into: &notes)
         case .nobodyBlinking:
-            misses += addBlinkNotes(verdicts, into: &notes)
-            misses += addLookingNotes(verdicts, into: &notes)
+            misses += blinkMisses(poses, cast: cast, into: &notes)
+            misses += lookingMisses(poses, cast: cast, into: &notes)
         case .noOverlap:
-            misses += addCoverNotes(verdicts, into: &notes)
-            misses += addLookingNotes(verdicts, into: &notes)
-            misses += addBlinkNotes(verdicts, into: &notes)
+            misses += coverMisses(poses, cast: cast, into: &notes)
+            misses += lookingMisses(poses, cast: cast, into: &notes)
+            misses += blinkMisses(poses, cast: cast, into: &notes)
         case .allStill:
-            for verdict in verdicts where verdict.jumping {
-                notes.append("\(verdict.id.displayName) launched anyway.")
+            for id in cast where (poses[id]?.isJumping ?? false) {
+                notes.append("\(id.displayName) jumped.")
                 misses += 1
             }
-            misses += addLookingNotes(verdicts, into: &notes)
-            misses += addCoverNotes(verdicts, into: &notes)
+            misses += lookingMisses(poses, cast: cast, into: &notes)
+            misses += coverMisses(poses, cast: cast, into: &notes)
         case .twoJumping:
+            let jumpCount = cast.filter { poses[$0]?.isJumping ?? false }.count
             if jumpCount < 2 {
-                notes.append(jumpCount == 1 ? "Only one made it off the ground." : "Everyone kept their paws down.")
+                notes.append(jumpCount == 1 ? "Need 2 jumping. Only one jumped." : "Need 2 jumping. Nobody jumped.")
                 misses += 2 - jumpCount
             }
-            misses += addLookingNotes(verdicts, into: &notes)
-            misses += addBlinkNotes(verdicts, into: &notes)
-            misses += addCoverNotes(verdicts, into: &notes)
+            misses += lookingMisses(poses, cast: cast, into: &notes)
+            misses += blinkMisses(poses, cast: cast, into: &notes)
+            misses += coverMisses(poses, cast: cast, into: &notes)
         case .catchJumper(let jumper):
-            if let verdict = verdicts.first(where: { $0.id == jumper }), !verdict.jumping {
-                notes.append("\(jumper.displayName) stayed put.")
+            if poses[jumper]?.isJumping != true {
+                notes.append("Tap when \(jumper.displayName) jumps.")
                 misses += 1
             }
-            misses += addLookingNotes(verdicts.filter { $0.id != jumper }, into: &notes)
-            misses += addBlinkNotes(verdicts, into: &notes)
-            misses += addCoverNotes(verdicts, into: &notes)
+            misses += lookingMisses(poses, cast: cast.filter { $0 != jumper }, into: &notes)
+            misses += blinkMisses(poses, cast: cast, into: &notes)
+            misses += coverMisses(poses, cast: cast, into: &notes)
         case .catchYawn(let who):
-            if let pose = poses[who], !pose.isYawning {
-                notes.append("\(who.displayName) did not yawn.")
+            if poses[who]?.isYawning != true {
+                notes.append("Tap when \(who.displayName) yawns.")
                 misses += 1
             }
-            misses += addLookingNotes(verdicts.filter { $0.id != who }, into: &notes)
-            misses += addCoverNotes(verdicts, into: &notes)
+            misses += lookingMisses(poses, cast: cast.filter { $0 != who }, into: &notes)
+            misses += coverMisses(poses, cast: cast, into: &notes)
         case .catchWave(let who):
-            if let pose = poses[who], !pose.isWaving {
-                notes.append("\(who.displayName) kept both paws down.")
+            if poses[who]?.isWaving != true {
+                notes.append("Tap when \(who.displayName) waves.")
                 misses += 1
             }
-            misses += addLookingNotes(verdicts.filter { $0.id != who }, into: &notes)
-            misses += addBlinkNotes(verdicts, into: &notes)
+            misses += lookingMisses(poses, cast: cast.filter { $0 != who }, into: &notes)
+            misses += blinkMisses(poses, cast: cast, into: &notes)
         case .nobodyYawning:
             for id in cast where (poses[id]?.isYawning ?? false) {
-                notes.append("\(id.displayName) yawned through it.")
+                notes.append("\(id.displayName) yawned.")
                 misses += 1
             }
-            misses += addLookingNotes(verdicts, into: &notes)
-            misses += addBlinkNotes(verdicts, into: &notes)
+            misses += lookingMisses(poses, cast: cast, into: &notes)
+            misses += blinkMisses(poses, cast: cast, into: &notes)
         }
 
         let success = misses == 0
@@ -100,21 +85,23 @@ enum ShotEvaluator {
             stars = 0
         }
 
+        let verdicts = cast.map { id in
+            makeVerdict(id: id, pose: poses[id] ?? .cameraReady, mission: mission, jumpCount: cast.filter { poses[$0]?.isJumping ?? false }.count)
+        }
+
         let title: String
         let caption: String
         if success {
-            title = successTitle(mission: mission)
+            title = "You got it!"
             caption = successCaption(mission: mission)
         } else {
-            title = failTitle(misses: misses)
-            caption = notes.first ?? funnyGroupCaption(verdicts: verdicts)
+            title = misses == 1 ? "So close!" : "Almost!"
+            caption = notes.first ?? "Try tapping when the hint says NOW!"
         }
 
         if !success && notes.isEmpty {
-            notes.append(funnyGroupCaption(verdicts: verdicts))
+            notes.append(caption)
         }
-
-        _ = (lookingCount, openCount, coverCount)
 
         return ShotEvaluation(
             success: success,
@@ -127,83 +114,142 @@ enum ShotEvaluator {
         )
     }
 
-    private static func addLookingNotes(_ verdicts: [CharacterVerdict], into notes: inout [String]) -> Int {
-        var misses = 0
-        for verdict in verdicts where !verdict.looking {
-            notes.append("\(verdict.id.displayName) has somewhere better to be.")
-            misses += 1
-        }
-        return misses
-    }
+    private static func makeVerdict(
+        id: CharacterID,
+        pose: Pose,
+        mission: Mission,
+        jumpCount: Int
+    ) -> CharacterVerdict {
+        let name = id.displayName
+        let looking = pose.isLooking
+        let eyesOpen = pose.eyesOpen
+        let jumping = pose.isJumping
+        let covering = pose.isCovering
+        let yawning = pose.isYawning
+        let waving = pose.isWaving
 
-    private static func addBlinkNotes(_ verdicts: [CharacterVerdict], into notes: inout [String]) -> Int {
-        var misses = 0
-        for verdict in verdicts where !verdict.eyesOpen {
-            notes.append("\(verdict.id.displayName) chose this exact millisecond to blink.")
-            misses += 1
-        }
-        return misses
-    }
+        var ok = true
+        var line = "\(name) looks great"
 
-    private static func addCoverNotes(_ verdicts: [CharacterVerdict], into notes: inout [String]) -> Int {
-        var misses = 0
-        for verdict in verdicts where verdict.covering {
-            if let target = verdict.id.coverTarget {
-                notes.append("\(verdict.id.displayName) photobombed \(target.displayName).")
-            } else {
-                notes.append("\(verdict.id.displayName) stole the frame.")
-            }
-            misses += 1
+        if covering {
+            ok = false
+            line = "\(name) covered a friend"
+        } else if !looking {
+            ok = false
+            line = "\(name) looked away"
+        } else if !eyesOpen && !yawning {
+            ok = false
+            line = "\(name) blinked"
         }
-        return misses
-    }
 
-    private static func successTitle(mission: Mission) -> String {
         switch mission {
-        case .allLooking: "Purrfect!"
-        case .twoJumping: "Caught mid-air!"
-        case .noOverlap: "Everyone fits!"
-        case .nobodyBlinking: "Not a blink."
-        case .catchJumper: "That's the hop."
-        case .allStill: "Hold still. Got it."
-        case .catchYawn: "Caught the yawn."
-        case .catchWave: "Paw in the air."
-        case .nobodyYawning: "Wide awake."
+        case .allStill where jumping:
+            ok = false
+            line = "\(name) jumped"
+        case .catchJumper(let jumper) where id == jumper:
+            if jumping {
+                ok = !covering
+                line = ok ? "\(name) jumped!" : line
+            } else {
+                ok = false
+                line = "Need \(name) jumping"
+            }
+        case .catchYawn(let who) where id == who:
+            if yawning {
+                ok = !covering
+                line = ok ? "\(name) yawned!" : line
+            } else {
+                ok = false
+                line = "Need \(name) yawning"
+            }
+        case .catchWave(let who) where id == who:
+            if waving {
+                ok = looking && !covering
+                line = ok ? "\(name) waved!" : line
+            } else {
+                ok = false
+                line = "Need \(name) waving"
+            }
+        case .nobodyYawning where yawning:
+            ok = false
+            line = "\(name) yawned"
+        case .twoJumping:
+            if jumpCount < 2 && !jumping {
+                ok = false
+                line = "Need more jumping"
+            } else if jumping {
+                line = "\(name) jumped"
+            }
+        default:
+            break
         }
+
+        return CharacterVerdict(
+            id: id,
+            looking: looking,
+            eyesOpen: eyesOpen,
+            jumping: jumping,
+            covering: covering,
+            yawning: yawning,
+            waving: waving,
+            ok: ok,
+            line: line
+        )
+    }
+
+    private static func lookingMisses(
+        _ poses: [CharacterID: Pose],
+        cast: [CharacterID],
+        into notes: inout [String]
+    ) -> Int {
+        var misses = 0
+        for id in cast where !(poses[id]?.isLooking ?? true) {
+            notes.append("\(id.displayName) looked away.")
+            misses += 1
+        }
+        return misses
+    }
+
+    private static func blinkMisses(
+        _ poses: [CharacterID: Pose],
+        cast: [CharacterID],
+        into notes: inout [String]
+    ) -> Int {
+        var misses = 0
+        for id in cast {
+            let pose = poses[id] ?? .cameraReady
+            if !pose.eyesOpen && !pose.isYawning {
+                notes.append("\(id.displayName) blinked.")
+                misses += 1
+            }
+        }
+        return misses
+    }
+
+    private static func coverMisses(
+        _ poses: [CharacterID: Pose],
+        cast: [CharacterID],
+        into notes: inout [String]
+    ) -> Int {
+        var misses = 0
+        for id in cast where (poses[id]?.isCovering ?? false) {
+            notes.append("\(id.displayName) covered a friend.")
+            misses += 1
+        }
+        return misses
     }
 
     private static func successCaption(mission: Mission) -> String {
         switch mission {
-        case .allLooking: "That's the one. Gallery material."
-        case .twoJumping: "Two airborne, two witnesses."
-        case .noOverlap: "Personal space: achieved."
-        case .nobodyBlinking: "Four pairs of eyes. All of them."
-        case .catchJumper(let id): "\(id.displayName) at the top. The others behaved."
-        case .allStill: "A quiet miracle."
-        case .catchYawn(let id): "\(id.displayName) could not fight it. You were ready."
-        case .catchWave(let id): "\(id.displayName) said hello. You pressed it."
-        case .nobodyYawning: "Not a single yawn. Impressive."
+        case .allLooking: "All 4 friends are looking. Nice!"
+        case .twoJumping: "Two friends in the air!"
+        case .noOverlap: "Every face has space."
+        case .nobodyBlinking: "Nobody blinked. Super!"
+        case .catchJumper(let id): "You caught \(id.displayName)’s jump!"
+        case .allStill: "Everyone sat still."
+        case .catchYawn(let id): "You caught \(id.displayName)’s yawn!"
+        case .catchWave(let id): "\(id.displayName) waved. You tapped it!"
+        case .nobodyYawning: "Everyone is awake."
         }
-    }
-
-    private static func failTitle(misses: Int) -> String {
-        switch misses {
-        case 1: "So close."
-        case 2: "Three angels and a gremlin."
-        default: "Cute chaos."
-        }
-    }
-
-    private static func funnyGroupCaption(verdicts: [CharacterVerdict]) -> String {
-        if verdicts.filter(\.covering).count >= 2 {
-            return "A huddle, not a portrait."
-        }
-        if verdicts.filter({ !$0.eyesOpen }).count >= 2 {
-            return "Mass blink. Unbelievable."
-        }
-        if verdicts.filter({ !$0.looking }).count >= 2 {
-            return "The group had other plans."
-        }
-        return "A little patience. A lot of purr-sonality."
     }
 }

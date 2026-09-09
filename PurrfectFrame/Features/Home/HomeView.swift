@@ -8,41 +8,47 @@ struct HomeView: View {
         let next = LevelCatalog.nextPlayable(progress: model.progress)
         let level = LevelCatalog.level(world: next.world, index: next.index)
 
-        ZStack {
-            Palette.cream.ignoresSafeArea()
-            Image("CafeBackground")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-                .opacity(0.14)
-                .allowsHitTesting(false)
-
-            VStack(spacing: 12) {
-                header
-                playCard(level: level)
-                    .frame(maxHeight: .infinity)
-                dailyRow
-                destRow
+        Palette.cream
+            .ignoresSafeArea()
+            .overlay {
+                Image("CafeBackground")
+                    .resizable()
+                    .scaledToFill()
+                    .opacity(0.14)
+                    .allowsHitTesting(false)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 6)
-            .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
+            .clipped()
+            .ignoresSafeArea()
+            .overlay {
+                VStack(spacing: 10) {
+                    header
+                    playCard(level: level)
+                        .frame(maxHeight: .infinity)
+                    dailyRow
+                    destRow
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 4)
+                .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .clipped()
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Image("BrandMark")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 44, height: 44)
+                .frame(width: 40, height: 40)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             VStack(alignment: .leading, spacing: 1) {
                 Text("Purrfect Frame")
-                    .font(.pfDisplay(22))
+                    .font(.pfDisplay(20))
                     .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Text(model.progress.photographerRank)
                     .font(.pfBody(12))
                     .foregroundStyle(Palette.wood)
@@ -59,7 +65,7 @@ struct HomeView: View {
                         .foregroundStyle(Palette.ink)
                 }
                 .padding(.horizontal, 10)
-                .frame(height: 40)
+                .frame(height: 36)
                 .background(Color.white.opacity(0.9), in: Capsule())
             }
             .buttonStyle(.plain)
@@ -70,9 +76,9 @@ struct HomeView: View {
                 model.screen = .settings
             } label: {
                 Image(systemName: "gearshape.fill")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Palette.ink)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 36, height: 36)
                     .background(Color.white.opacity(0.9), in: Circle())
             }
             .buttonStyle(.plain)
@@ -89,7 +95,7 @@ struct HomeView: View {
                 TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
                     let now = context.date.timeIntervalSinceReferenceDate
                     GeometryReader { geo in
-                        let scale = min(geo.size.width / 390, geo.size.height / 260)
+                        let animal = min(geo.size.width / 560, geo.size.height / 340, 0.52)
                         ZStack(alignment: .bottom) {
                             Image(level.world.background(for: level.index))
                                 .resizable()
@@ -103,17 +109,18 @@ struct HomeView: View {
                                 endPoint: .bottom
                             )
 
-                            HStack(alignment: .bottom, spacing: -12) {
+                            HStack(alignment: .bottom, spacing: -8) {
                                 ForEach(Array(level.cast.enumerated()), id: \.element.id) { index, id in
                                     CreatureView(
                                         id: id,
                                         pose: IdleMotion.pose(id: id, at: now, index: index)
                                     )
-                                    .scaleEffect(0.48 * max(scale, 0.72))
-                                    .frame(width: 86 * max(scale, 0.72), height: 108 * max(scale, 0.72))
+                                    .scaleEffect(animal)
+                                    .frame(width: 200 * animal, height: 230 * animal)
+                                    .clipped()
                                 }
                             }
-                            .padding(.bottom, 56)
+                            .padding(.bottom, 52)
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(level.world.title.uppercased())
@@ -121,7 +128,7 @@ struct HomeView: View {
                                     .tracking(1.1)
                                     .foregroundStyle(.white.opacity(0.82))
                                 Text("Level \(level.index + 1)")
-                                    .font(.pfDisplay(24))
+                                    .font(.pfDisplay(22))
                                     .foregroundStyle(.white)
                                 Text(level.mission.prompt)
                                     .font(.pfBody(14))
@@ -133,8 +140,10 @@ struct HomeView: View {
                             .padding(.bottom, 12)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .clipped()
                     }
                 }
+                .clipped()
 
                 HStack {
                     Label("Play", systemImage: "camera.fill")
@@ -144,10 +153,11 @@ struct HomeView: View {
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 18)
-                .padding(.vertical, 14)
+                .padding(.vertical, 12)
                 .background(Palette.sky)
             }
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .clipped()
             .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
         }
         .buttonStyle(.plain)
@@ -175,7 +185,7 @@ struct HomeView: View {
             }
             .foregroundStyle(Palette.ink)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .background(Color.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -189,7 +199,7 @@ struct HomeView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "sparkles")
-                Text("Today's challenge")
+                Text("Today’s challenge")
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .bold))
@@ -197,7 +207,7 @@ struct HomeView: View {
             .font(.pfBody(15))
             .foregroundStyle(Palette.wood)
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .background(Color.white.opacity(0.84), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)

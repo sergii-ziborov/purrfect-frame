@@ -82,12 +82,12 @@ struct StageView: View {
     private func canvas(size: CGSize) -> some View {
         let width = size.width
         let height = max(size.height, 1)
-        let scale = min(width / 340, height / 560)
+        let scale = min(width / 420, height / 640, 1.05)
         return ZStack {
             Image(backgroundName ?? world.background(for: levelIndex))
                 .resizable()
                 .scaledToFill()
-                .frame(width: width, height: height, alignment: .bottom)
+                .frame(width: width, height: height, alignment: .top)
                 .clipped()
                 .id(backgroundName ?? world.background(for: levelIndex))
 
@@ -99,12 +99,11 @@ struct StageView: View {
 
             ForEach(StageLayout.slots(for: world)) { slot in
                 let pose = poses[slot.id] ?? .cameraReady
+                let x = min(max(width * (0.5 + slot.x) + pose.cover * pose.turnSign * 8, 70), width - 70)
+                let y = min(max(height * (0.58 + slot.y * 0.7), 90), height - 70)
                 CreatureView(id: slot.id, pose: pose)
                     .scaleEffect(slot.scale * scale)
-                    .position(
-                        x: width * (0.5 + slot.x) + pose.cover * pose.turnSign * 8,
-                        y: height * (0.62 + slot.y)
-                    )
+                    .position(x: x, y: y)
                     .zIndex(slot.z + pose.cover * 2 + pose.jump)
             }
 

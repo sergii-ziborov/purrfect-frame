@@ -207,29 +207,29 @@ enum Mission: Equatable, Codable, Hashable, Sendable {
 
     var prompt: String {
         switch self {
-        case .allLooking: "Get all 4 looking"
-        case .twoJumping: "Catch two in mid-air"
-        case .noOverlap: "No overlapping faces"
-        case .nobodyBlinking: "Nobody blinking"
-        case .catchJumper(let id): "Catch \(id.displayName) in a jump"
-        case .allStill: "Everyone sitting still"
-        case .catchYawn(let id): "Catch \(id.displayName) yawning"
-        case .catchWave(let id): "Catch \(id.displayName) waving"
-        case .nobodyYawning: "No yawns in the shot"
+        case .allLooking: "Get everyone looking!"
+        case .twoJumping: "Catch 2 jumping!"
+        case .noOverlap: "No covering faces!"
+        case .nobodyBlinking: "No blinking!"
+        case .catchJumper(let id): "Catch \(id.displayName) jumping!"
+        case .allStill: "Everyone sitting still!"
+        case .catchYawn(let id): "Catch \(id.displayName) yawning!"
+        case .catchWave(let id): "Catch \(id.displayName) waving!"
+        case .nobodyYawning: "No yawns!"
         }
     }
 
     var hint: String {
         switch self {
-        case .allLooking: "Eyes open, faces to the camera."
-        case .twoJumping: "Two airborne. The other two looking."
-        case .noOverlap: "Give every face its own space."
-        case .nobodyBlinking: "Hold for the blink to pass."
-        case .catchJumper(let id): "\(id.displayName) at the top of the hop."
-        case .allStill: "Paws on the ground. Faces forward."
-        case .catchYawn(let id): "\(id.displayName) mid-yawn. The others looking."
-        case .catchWave(let id): "\(id.displayName) with a paw up."
-        case .nobodyYawning: "Everyone awake. No yawns."
+        case .allLooking: "Wait until all 4 faces look at you. Then tap!"
+        case .twoJumping: "Tap when two friends are in the air."
+        case .noOverlap: "Tap when nobody is blocking a friend."
+        case .nobodyBlinking: "Wait for the blinks to finish. Then tap!"
+        case .catchJumper(let id): "Tap at the top of \(id.displayName)’s jump."
+        case .allStill: "Tap when nobody is jumping."
+        case .catchYawn(let id): "Tap when \(id.displayName) yawns."
+        case .catchWave(let id): "Tap when \(id.displayName) has a paw up."
+        case .nobodyYawning: "Tap when everyone is awake."
         }
     }
 }
@@ -438,7 +438,7 @@ struct ProgressState: Codable, Equatable, Sendable {
         owlCompletions: 0,
         hapticsEnabled: true,
         soundEnabled: true,
-        hintFlashEnabled: false,
+        hintFlashEnabled: true,
         hasSeenIntro: false,
         didAskForRating: false
     )
@@ -489,7 +489,7 @@ struct ProgressState: Codable, Equatable, Sendable {
         owlCompletions = try c.decodeIfPresent(Int.self, forKey: .owlCompletions) ?? 0
         hapticsEnabled = try c.decodeIfPresent(Bool.self, forKey: .hapticsEnabled) ?? true
         soundEnabled = try c.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? true
-        hintFlashEnabled = try c.decodeIfPresent(Bool.self, forKey: .hintFlashEnabled) ?? false
+        hintFlashEnabled = try c.decodeIfPresent(Bool.self, forKey: .hintFlashEnabled) ?? true
         let hadProgress = !starsByLevel.isEmpty || cafeCompletions > 0
         hasSeenIntro = try c.decodeIfPresent(Bool.self, forKey: .hasSeenIntro) ?? hadProgress
         didAskForRating = try c.decodeIfPresent(Bool.self, forKey: .didAskForRating) ?? false
@@ -574,6 +574,10 @@ struct CharacterVerdict: Equatable, Sendable {
     var eyesOpen: Bool
     var jumping: Bool
     var covering: Bool
+    var yawning: Bool
+    var waving: Bool
+    var ok: Bool
+    var line: String
 }
 
 struct ShotEvaluation: Equatable, Sendable {
