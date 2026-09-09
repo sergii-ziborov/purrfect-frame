@@ -54,7 +54,17 @@ struct SpriteCreatureView: View {
         }
         let jump = take(pose.jump)
         let cover = take(pose.cover)
-        let turn = take(pose.facing)
+        let turnAmount = take(pose.facing)
+        let glance: Double
+        let profile: Double
+        if pose.facing < 0.52 {
+            glance = turnAmount
+            profile = 0
+        } else {
+            let u = min(max((pose.facing - 0.52) / 0.48, 0), 1)
+            profile = turnAmount * u
+            glance = turnAmount * (1 - u)
+        }
         let yawn = take(pose.yawn)
         let paw = take(pose.paw)
         let derp = take(pose.derp)
@@ -66,10 +76,11 @@ struct SpriteCreatureView: View {
             Layer(name: "Derp", weight: derp),
             Layer(name: "Paw", weight: paw),
             Layer(name: "Yawn", weight: yawn),
-            Layer(name: "Turn", weight: turn),
+            Layer(name: "Glance", weight: glance),
+            Layer(name: "Turn", weight: profile),
             Layer(name: "Cover", weight: cover),
             Layer(name: "Jump", weight: jump),
-        ].filter { $0.weight > 0.03 }
+        ].filter { $0.weight > 0.02 }
     }
 
     private func sprite(_ suffix: String) -> some View {
@@ -105,7 +116,7 @@ enum IdleMotion {
             pose.derp = pulse((time + Double(index) * 2.8 + 2.0).truncatingRemainder(dividingBy: 11.0), duration: 1.55) * 0.88
         }
         if id.personality == .turner {
-            pose.facing = pulse((time + Double(index) * 1.6 + 5.0).truncatingRemainder(dividingBy: 12.4), duration: 2.2) * 0.9
+            pose.facing = pulse((time + Double(index) * 1.6 + 5.0).truncatingRemainder(dividingBy: 14.0), duration: 3.1) * 0.95
         }
         _ = id
         return pose
@@ -114,8 +125,8 @@ enum IdleMotion {
     private static func pulse(_ t: Double, duration: Double) -> Double {
         guard t >= 0, t < duration else { return 0 }
         let u = t / duration
-        if u < 0.28 { return u / 0.28 }
-        if u > 0.72 { return max(0, (1 - u) / 0.28) }
+        if u < 0.34 { return u / 0.34 }
+        if u > 0.66 { return max(0, (1 - u) / 0.34) }
         return 1
     }
 }

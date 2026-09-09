@@ -141,6 +141,30 @@ SPRITES = {
     "NibBlink": "130.jpg",
     "NibTurn": "137.jpg",
     "NibJump": "148.jpg",
+    "MochiGlance": "156.jpg",
+    "NoriGlance": "153.jpg",
+    "ButterGlance": "155.jpg",
+    "InkGlance": "154.jpg",
+    "PipGlance": "158.jpg",
+    "WaddleGlance": "160.jpg",
+    "ScoopGlance": "159.jpg",
+    "PebbleGlance": "157.jpg",
+    "BiscuitGlance": "161.jpg",
+    "PepperGlance": "162.jpg",
+    "MapleGlance": "164.jpg",
+    "ScoutGlance": "163.jpg",
+    "CloverGlance": "168.jpg",
+    "HazelGlance": "166.jpg",
+    "FigGlance": "167.jpg",
+    "ThistleGlance": "165.jpg",
+    "EmberGlance": "171.jpg",
+    "RustGlance": "169.jpg",
+    "FernGlance": "172.jpg",
+    "SootGlance": "170.jpg",
+    "HootGlance": "173.jpg",
+    "VelvetGlance": "174.jpg",
+    "ParchmentGlance": "175.jpg",
+    "NibGlance": "176.jpg",
 }
 
 BACKGROUNDS = {
@@ -167,8 +191,9 @@ BACKGROUNDS = {
     "OwlAttic": "116.jpg",
 }
 
-POSES = ["Idle", "Blink", "Turn", "Jump", "Cover", "Yawn", "Derp", "Paw"]
+POSES = ["Idle", "Blink", "Turn", "Glance", "Jump", "Cover", "Yawn", "Derp", "Paw"]
 NEW_CAST = [
+    "Mochi", "Nori", "Butter", "Ink", "Pip", "Waddle", "Scoop", "Pebble",
     "Biscuit", "Pepper", "Maple", "Scout", "Clover", "Hazel", "Fig", "Thistle",
     "Ember", "Rust", "Fern", "Soot", "Hoot", "Velvet", "Parchment", "Nib",
 ]

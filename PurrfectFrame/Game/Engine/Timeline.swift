@@ -12,7 +12,7 @@ struct Channel: Equatable, Sendable {
         Channel(keys: [Key(time: 0, value: value)])
     }
 
-    mutating func addHold(_ range: ClosedRange<TimeInterval>, value: Double, ease: TimeInterval = 0.42) {
+    mutating func addHold(_ range: ClosedRange<TimeInterval>, value: Double, ease: TimeInterval = 0.55) {
         keys.append(Key(time: max(0, range.lowerBound - ease), value: value))
         keys.append(Key(time: range.lowerBound, value: value))
         keys.append(Key(time: range.upperBound, value: value))
@@ -20,12 +20,23 @@ struct Channel: Equatable, Sendable {
     }
 
     mutating func addPulse(at start: TimeInterval, duration: TimeInterval, peak: Double, hold: TimeInterval = 0) {
-        let rise = max(0.08, (duration - hold) * 0.42)
+        let rise = max(0.16, (duration - hold) * 0.52)
         keys.append(Key(time: start, value: 0))
         keys.append(Key(time: start + rise, value: peak))
         if hold > 0 {
             keys.append(Key(time: start + rise + hold, value: peak))
         }
+        keys.append(Key(time: start + duration, value: 0))
+    }
+
+    mutating func addTurn(at start: TimeInterval, duration: TimeInterval, peak: Double, hold: TimeInterval) {
+        let rise = max(0.55, (duration - hold) * 0.6)
+        let fallStart = start + rise + hold
+        keys.append(Key(time: start, value: 0))
+        keys.append(Key(time: start + rise * 0.38, value: peak * 0.42))
+        keys.append(Key(time: start + rise, value: peak))
+        keys.append(Key(time: fallStart, value: peak))
+        keys.append(Key(time: fallStart + rise * 0.38, value: peak * 0.42))
         keys.append(Key(time: start + duration, value: 0))
     }
 
@@ -62,8 +73,8 @@ struct Channel: Equatable, Sendable {
 
     private static func smooth(_ t: TimeInterval, _ a: TimeInterval, _ b: TimeInterval) -> Double {
         guard b > a else { return 0 }
-        let u = (t - a) / (b - a)
-        return u * u * (3 - 2 * u)
+        let u = min(max((t - a) / (b - a), 0), 1)
+        return u * u * u * (u * (u * 6 - 15) + 10)
     }
 }
 
@@ -147,13 +158,13 @@ enum EventKind {
 
     var duration: TimeInterval {
         switch self {
-        case .blink: 1.25
-        case .turn: 2.45
-        case .jump: 1.60
-        case .cover: 1.95
-        case .yawn: 2.25
-        case .paw: 1.80
-        case .derp: 1.55
+        case .blink: 1.40
+        case .turn: 3.20
+        case .jump: 1.85
+        case .cover: 2.15
+        case .yawn: 2.45
+        case .paw: 2.00
+        case .derp: 1.75
         }
     }
 }
@@ -359,9 +370,9 @@ enum TimelineBuilder {
     ) {
         switch kind {
         case .blink:
-            blink.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.52)
+            blink.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.55)
         case .turn:
-            facing.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.80)
+            facing.addTurn(at: start, duration: kind.duration, peak: 1, hold: 0.95)
         case .jump:
             jump.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.28)
         case .cover:
@@ -396,7 +407,7 @@ enum TimelineBuilder {
             origins.append(afterIntro)
         }
         let afterWindow = window.upperBound + 0.7
-        if afterWindow + 2.7 < loopDuration {
+        if afterWindow + 3.5 < loopDuration {
             origins.append(afterWindow)
         }
         guard !origins.isEmpty else { return }
@@ -410,7 +421,7 @@ enum TimelineBuilder {
             case .blinkWave:
                 blink.addPulse(at: origin + stagger, duration: EventKind.blink.duration, peak: 1, hold: 0.45)
             case .turnOff:
-                facing.addPulse(at: origin + stagger, duration: EventKind.turn.duration, peak: 1, hold: 0.55)
+                facing.addTurn(at: origin + stagger, duration: EventKind.turn.duration, peak: 1, hold: 0.7)
             case .jumpRelay:
                 jump.addPulse(at: origin + stagger * 1.3, duration: EventKind.jump.duration, peak: 1, hold: 0.22)
             case .yawnRipple:
@@ -426,7 +437,7 @@ enum TimelineBuilder {
                 paw.addPulse(at: origin + stagger + 0.55, duration: EventKind.paw.duration, peak: 0.9, hold: 0.3)
             case .peekaboo:
                 cover.addPulse(at: origin + stagger, duration: EventKind.cover.duration, peak: 1, hold: 0.4)
-                facing.addPulse(at: origin + stagger + 0.35, duration: EventKind.turn.duration, peak: 0.85, hold: 0.3)
+                facing.addTurn(at: origin + stagger + 0.35, duration: EventKind.turn.duration, peak: 0.85, hold: 0.45)
             }
         }
     }
