@@ -110,15 +110,21 @@ struct Pose: Equatable, Sendable {
     var mouth: Mouth
     /// Idle breathing 0...1.
     var breath: Double
+    var yawn: Double
+    var paw: Double
+    var derp: Double
 
     static let cameraReady = Pose(
-        facing: 0, turnSign: 1, blink: 0, jump: 0, cover: 0, mouth: .smile, breath: 0.4
+        facing: 0, turnSign: 1, blink: 0, jump: 0, cover: 0,
+        mouth: .smile, breath: 0.4, yawn: 0, paw: 0, derp: 0
     )
 
     var isLooking: Bool { facing < 0.28 }
-    var eyesOpen: Bool { blink < 0.45 }
+    var eyesOpen: Bool { blink < 0.45 && yawn < 0.45 }
     var isJumping: Bool { jump > 0.45 }
     var isCovering: Bool { cover > 0.4 }
+    var isYawning: Bool { yawn > 0.45 }
+    var isWaving: Bool { paw > 0.45 }
 }
 
 enum Mission: Equatable, Codable, Hashable, Sendable {
@@ -128,6 +134,9 @@ enum Mission: Equatable, Codable, Hashable, Sendable {
     case nobodyBlinking
     case catchJumper(CharacterID)
     case allStill
+    case catchYawn(CharacterID)
+    case catchWave(CharacterID)
+    case nobodyYawning
 
     var prompt: String {
         switch self {
@@ -137,6 +146,9 @@ enum Mission: Equatable, Codable, Hashable, Sendable {
         case .nobodyBlinking: "Nobody blinking"
         case .catchJumper(let id): "Catch \(id.displayName) in a jump"
         case .allStill: "Everyone sitting still"
+        case .catchYawn(let id): "Catch \(id.displayName) yawning"
+        case .catchWave(let id): "Catch \(id.displayName) waving"
+        case .nobodyYawning: "No yawns in the shot"
         }
     }
 
@@ -148,6 +160,9 @@ enum Mission: Equatable, Codable, Hashable, Sendable {
         case .nobodyBlinking: "Hold for the blink to pass."
         case .catchJumper(let id): "\(id.displayName) at the top of the hop."
         case .allStill: "Paws on the ground. Faces forward."
+        case .catchYawn(let id): "\(id.displayName) mid-yawn. The others looking."
+        case .catchWave(let id): "\(id.displayName) with a paw up."
+        case .nobodyYawning: "Everyone awake. No yawns."
         }
     }
 }
@@ -194,10 +209,14 @@ enum LevelCatalog {
             (.catchJumper(.butter), .medium),
             (.twoJumping, .medium),
             (.allStill, .medium),
+            (.catchYawn(.nori), .medium),
+            (.catchWave(.mochi), .medium),
+            (.nobodyYawning, .medium),
             (.allLooking, .hard),
             (.noOverlap, .hard),
             (.twoJumping, .hard),
             (.nobodyBlinking, .hard),
+            (.catchYawn(.ink), .hard),
         ]
     )
 
@@ -210,8 +229,12 @@ enum LevelCatalog {
             (.twoJumping, .medium),
             (.allStill, .medium),
             (.catchJumper(.scoop), .medium),
+            (.catchWave(.waddle), .medium),
+            (.catchYawn(.pip), .medium),
             (.allLooking, .hard),
             (.twoJumping, .hard),
+            (.nobodyYawning, .hard),
+            (.catchWave(.pebble), .hard),
         ]
     )
 

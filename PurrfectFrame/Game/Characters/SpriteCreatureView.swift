@@ -8,20 +8,11 @@ struct SpriteCreatureView: View {
         id.rawValue.prefix(1).uppercased() + id.rawValue.dropFirst()
     }
 
-    /// Turn sprites were drawn looking a particular way; flip when the timeline disagrees.
-    private var turnFacesRight: Bool {
-        switch id {
-        case .mochi, .butter, .waddle, .scoop: true
-        case .nori, .ink, .pip, .pebble: false
-        }
-    }
-
     var body: some View {
         let jumpY = -pose.jump * 52
         let squash = 1 - pose.jump * 0.05 + pose.breath * 0.012
         let stretch = 1 + pose.jump * 0.07 - pose.breath * 0.01
         let coverX = pose.cover * 30 * pose.turnSign
-        let flipTurn = (pose.turnSign > 0) != turnFacesRight
 
         ZStack {
             Ellipse()
@@ -30,21 +21,51 @@ struct SpriteCreatureView: View {
                 .offset(y: 82)
 
             ZStack {
-                sprite("Idle")
-                sprite("Blink").opacity(min(1, pose.blink * 1.15))
-                sprite("Turn")
-                    .scaleEffect(x: flipTurn ? -1 : 1, y: 1)
-                    .opacity(min(1, pose.facing * 1.2))
-                if id.species == .cat {
-                    sprite("Cover").opacity(min(1, pose.cover * 1.15))
+                ForEach(layers, id: \.name) { layer in
+                    sprite(layer.name)
+                        .opacity(layer.weight)
                 }
-                sprite("Jump").opacity(min(1, pose.jump * 1.2))
             }
+            .compositingGroup()
             .scaleEffect(x: squash, y: stretch)
             .offset(x: coverX, y: jumpY)
         }
         .frame(width: 200, height: 230)
         .scaleEffect(id.bodyScale)
+    }
+
+    private struct Layer: Equatable {
+        var name: String
+        var weight: Double
+    }
+
+    /// One body on screen. Idle yields to whatever action is actually happening,
+    /// so a turn or blink never sits on top of a second copy of the same cat.
+    private var layers: [Layer] {
+        var remaining = 1.0
+        func take(_ amount: Double) -> Double {
+            let weight = min(max(amount, 0), remaining)
+            remaining -= weight
+            return weight
+        }
+        let jump = take(pose.jump)
+        let cover = id.species == .cat ? take(pose.cover) : 0
+        let turn = take(pose.facing)
+        let yawn = take(pose.yawn)
+        let paw = take(pose.paw)
+        let derp = take(pose.derp)
+        let blink = take(pose.blink)
+        let idle = remaining
+        return [
+            Layer(name: "Idle", weight: idle),
+            Layer(name: "Blink", weight: blink),
+            Layer(name: "Derp", weight: derp),
+            Layer(name: "Paw", weight: paw),
+            Layer(name: "Yawn", weight: yawn),
+            Layer(name: "Turn", weight: turn),
+            Layer(name: "Cover", weight: cover),
+            Layer(name: "Jump", weight: jump),
+        ].filter { $0.weight > 0.03 }
     }
 
     private func sprite(_ suffix: String) -> some View {

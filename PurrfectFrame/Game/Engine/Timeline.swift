@@ -72,6 +72,9 @@ struct CharacterClip: Equatable, Sendable {
     var blink: Channel
     var jump: Channel
     var cover: Channel
+    var yawn: Channel
+    var paw: Channel
+    var derp: Channel
     var turnSign: Double
 
     func pose(at time: TimeInterval, loop: TimeInterval, breath: Double) -> Pose {
@@ -79,20 +82,33 @@ struct CharacterClip: Equatable, Sendable {
         let blinkValue = min(max(blink.sample(time, loop: loop), 0), 1)
         let jumpValue = min(max(jump.sample(time, loop: loop), 0), 1)
         let coverValue = min(max(cover.sample(time, loop: loop), 0), 1)
+        let yawnValue = min(max(yawn.sample(time, loop: loop), 0), 1)
+        let pawValue = min(max(paw.sample(time, loop: loop), 0), 1)
+        let derpValue = min(max(derp.sample(time, loop: loop), 0), 1)
         return Pose(
             facing: facingValue,
             turnSign: turnSign,
             blink: blinkValue,
             jump: jumpValue,
             cover: coverValue,
-            mouth: Self.mouth(facing: facingValue, blink: blinkValue, jump: jumpValue, cover: coverValue),
-            breath: breath
+            mouth: Self.mouth(
+                facing: facingValue, blink: blinkValue, jump: jumpValue,
+                cover: coverValue, yawn: yawnValue, derp: derpValue
+            ),
+            breath: breath,
+            yawn: yawnValue,
+            paw: pawValue,
+            derp: derpValue
         )
     }
 
-    private static func mouth(facing: Double, blink: Double, jump: Double, cover: Double) -> Mouth {
+    private static func mouth(
+        facing: Double, blink: Double, jump: Double, cover: Double, yawn: Double, derp: Double
+    ) -> Mouth {
+        if yawn > 0.45 { return .open }
         if cover > 0.5 { return .tongue }
         if jump > 0.5 { return .open }
+        if derp > 0.45 { return .derp }
         if facing > 0.55 { return .derp }
         if blink > 0.55 { return .flat }
         return .smile
@@ -127,7 +143,7 @@ struct RoundTimeline: Equatable, Sendable {
 }
 
 enum EventKind {
-    case blink, turn, jump, cover
+    case blink, turn, jump, cover, yawn, paw, derp
 
     var duration: TimeInterval {
         switch self {
@@ -135,8 +151,21 @@ enum EventKind {
         case .turn: 1.35
         case .jump: 0.72
         case .cover: 0.95
+        case .yawn: 1.05
+        case .paw: 0.85
+        case .derp: 0.70
         }
     }
+}
+
+enum RoundScheme: String, CaseIterable, Sendable {
+    case scatter
+    case blinkWave
+    case turnOff
+    case jumpRelay
+    case yawnRipple
+    case huddle
+    case pawParty
 }
 
 enum TimelineBuilder {
@@ -159,25 +188,36 @@ enum TimelineBuilder {
         let success = successPoses(mission: mission, cast: cast, rng: &rng)
         var clips: [CharacterID: CharacterClip] = [:]
 
-        for id in cast {
+        let scheme = RoundScheme.allCases[rng.nextInt(in: 0...(RoundScheme.allCases.count - 1))]
+
+        for (index, id) in cast.enumerated() {
             let target = success[id] ?? .cameraReady
             var facing = Channel.constant(0)
             var blink = Channel.constant(0)
             var jump = Channel.constant(0)
             var cover = Channel.constant(0)
+            var yawn = Channel.constant(0)
+            var paw = Channel.constant(0)
+            var derp = Channel.constant(0)
             let turnSign = rng.nextBool() ? 1.0 : -1.0
 
             facing.addHold(0...introEnd, value: 0)
             blink.addHold(0...introEnd, value: 0)
             jump.addHold(0...introEnd, value: 0)
             cover.addHold(0...introEnd, value: 0)
+            yawn.addHold(0...introEnd, value: 0)
+            paw.addHold(0...introEnd, value: 0)
+            derp.addHold(0...introEnd, value: 0)
 
             facing.addHold(window, value: target.facing)
             blink.addHold(window, value: target.blink)
             jump.addHold(window, value: target.jump)
             cover.addHold(window, value: target.cover)
+            yawn.addHold(window, value: target.yawn)
+            paw.addHold(window, value: target.paw)
+            derp.addHold(window, value: target.derp)
 
-            let kinds = chaosPool(personality: id.personality, mission: mission)
+            let kinds = chaosPool(personality: id.personality, mission: mission, scheme: scheme)
             for _ in 0..<difficulty.chaosCount {
                 let kind = rng.pick(kinds)
                 guard let start = slot(
@@ -185,23 +225,32 @@ enum TimelineBuilder {
                     duration: kind.duration,
                     forbidden: [forbidden, 0...introEnd]
                 ) else { continue }
-                switch kind {
-                case .blink:
-                    blink.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.06)
-                case .turn:
-                    facing.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.45)
-                case .jump:
-                    jump.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.12)
-                case .cover:
-                    cover.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.28)
-                }
+                apply(kind, at: start, facing: &facing, blink: &blink, jump: &jump, cover: &cover, yawn: &yawn, paw: &paw, derp: &derp)
             }
+
+            applyScheme(
+                scheme,
+                index: index,
+                castCount: cast.count,
+                window: window,
+                rng: &rng,
+                facing: &facing,
+                blink: &blink,
+                jump: &jump,
+                cover: &cover,
+                yawn: &yawn,
+                paw: &paw,
+                derp: &derp
+            )
 
             clips[id] = CharacterClip(
                 facing: facing,
                 blink: blink,
                 jump: jump,
                 cover: cover,
+                yawn: yawn,
+                paw: paw,
+                derp: derp,
                 turnSign: turnSign
             )
         }
@@ -239,25 +288,114 @@ enum TimelineBuilder {
         case .catchJumper(let jumper):
             poses[jumper]?.jump = 1
             poses[jumper]?.mouth = .open
+        case .catchYawn(let who):
+            poses[who]?.yawn = 1
+            poses[who]?.mouth = .open
+        case .catchWave(let who):
+            poses[who]?.paw = 1
+        case .nobodyYawning:
+            break
         }
         return poses
     }
 
-    private static func chaosPool(personality: Personality, mission: Mission) -> [EventKind] {
-        var pool: [EventKind] = [.blink, .blink, .turn, .jump, .cover]
+    private static func chaosPool(
+        personality: Personality,
+        mission: Mission,
+        scheme: RoundScheme
+    ) -> [EventKind] {
+        var pool: [EventKind] = [.blink, .blink, .turn, .jump, .cover, .yawn, .paw, .derp]
         switch personality {
-        case .blinker: pool += [.blink, .blink, .blink]
-        case .turner: pool += [.turn, .turn]
-        case .jumper: pool += [.jump, .jump]
-        case .coverer: pool += [.cover, .cover]
+        case .blinker: pool += [.blink, .blink, .blink, .yawn]
+        case .turner: pool += [.turn, .turn, .derp]
+        case .jumper: pool += [.jump, .jump, .paw]
+        case .coverer: pool += [.cover, .cover, .paw]
         }
         switch mission {
-        case .allLooking: pool += [.turn, .blink, .cover]
+        case .allLooking: pool += [.turn, .blink, .cover, .derp]
         case .twoJumping, .catchJumper, .allStill: pool += [.jump, .jump]
         case .noOverlap: pool += [.cover, .cover]
-        case .nobodyBlinking: pool += [.blink, .blink]
+        case .nobodyBlinking: pool += [.blink, .blink, .yawn]
+        case .catchYawn, .nobodyYawning: pool += [.yawn, .yawn]
+        case .catchWave: pool += [.paw, .paw]
+        }
+        switch scheme {
+        case .scatter: break
+        case .blinkWave: pool += [.blink, .blink]
+        case .turnOff: pool += [.turn, .turn]
+        case .jumpRelay: pool += [.jump]
+        case .yawnRipple: pool += [.yawn, .yawn]
+        case .huddle: pool += [.cover, .cover]
+        case .pawParty: pool += [.paw, .paw]
         }
         return pool
+    }
+
+    private static func apply(
+        _ kind: EventKind,
+        at start: TimeInterval,
+        facing: inout Channel,
+        blink: inout Channel,
+        jump: inout Channel,
+        cover: inout Channel,
+        yawn: inout Channel,
+        paw: inout Channel,
+        derp: inout Channel
+    ) {
+        switch kind {
+        case .blink:
+            blink.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.06)
+        case .turn:
+            facing.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.45)
+        case .jump:
+            jump.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.12)
+        case .cover:
+            cover.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.28)
+        case .yawn:
+            yawn.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.28)
+        case .paw:
+            paw.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.22)
+        case .derp:
+            derp.addPulse(at: start, duration: kind.duration, peak: 1, hold: 0.18)
+        }
+    }
+
+    private static func applyScheme(
+        _ scheme: RoundScheme,
+        index: Int,
+        castCount: Int,
+        window: ClosedRange<TimeInterval>,
+        rng: inout SeededRNG,
+        facing: inout Channel,
+        blink: inout Channel,
+        jump: inout Channel,
+        cover: inout Channel,
+        yawn: inout Channel,
+        paw: inout Channel,
+        derp: inout Channel
+    ) {
+        let afterIntro = introEnd + 0.2
+        let beforeWindow = max(afterIntro, window.lowerBound - 1.6)
+        guard beforeWindow > afterIntro + 0.3 else { return }
+        let stagger = Double(index) * 0.32
+        switch scheme {
+        case .scatter:
+            derp.addPulse(at: rng.next(in: afterIntro...beforeWindow), duration: EventKind.derp.duration, peak: 0.85, hold: 0.1)
+        case .blinkWave:
+            blink.addPulse(at: afterIntro + stagger, duration: EventKind.blink.duration, peak: 1, hold: 0.05)
+        case .turnOff:
+            facing.addPulse(at: afterIntro + stagger, duration: 1.1, peak: 1, hold: 0.3)
+        case .jumpRelay:
+            jump.addPulse(at: afterIntro + stagger * 1.4, duration: EventKind.jump.duration, peak: 1, hold: 0.08)
+        case .yawnRipple:
+            yawn.addPulse(at: afterIntro + stagger, duration: EventKind.yawn.duration, peak: 1, hold: 0.2)
+        case .huddle:
+            if index % 2 == 1 {
+                cover.addPulse(at: afterIntro + 0.15, duration: 1.1, peak: 1, hold: 0.35)
+            }
+        case .pawParty:
+            paw.addPulse(at: afterIntro + stagger, duration: EventKind.paw.duration, peak: 1, hold: 0.2)
+        }
     }
 
     private static func slot(

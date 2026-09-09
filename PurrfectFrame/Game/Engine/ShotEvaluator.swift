@@ -60,6 +60,27 @@ enum ShotEvaluator {
             misses += addLookingNotes(verdicts.filter { $0.id != jumper }, into: &notes)
             misses += addBlinkNotes(verdicts, into: &notes)
             misses += addCoverNotes(verdicts, into: &notes)
+        case .catchYawn(let who):
+            if let pose = poses[who], !pose.isYawning {
+                notes.append("\(who.displayName) did not yawn.")
+                misses += 1
+            }
+            misses += addLookingNotes(verdicts.filter { $0.id != who }, into: &notes)
+            misses += addCoverNotes(verdicts, into: &notes)
+        case .catchWave(let who):
+            if let pose = poses[who], !pose.isWaving {
+                notes.append("\(who.displayName) kept both paws down.")
+                misses += 1
+            }
+            misses += addLookingNotes(verdicts.filter { $0.id != who }, into: &notes)
+            misses += addBlinkNotes(verdicts, into: &notes)
+        case .nobodyYawning:
+            for id in cast where (poses[id]?.isYawning ?? false) {
+                notes.append("\(id.displayName) yawned through it.")
+                misses += 1
+            }
+            misses += addLookingNotes(verdicts, into: &notes)
+            misses += addBlinkNotes(verdicts, into: &notes)
         }
 
         let success = misses == 0
@@ -145,6 +166,9 @@ enum ShotEvaluator {
         case .nobodyBlinking: "Not a blink."
         case .catchJumper: "That's the hop."
         case .allStill: "Hold still. Got it."
+        case .catchYawn: "Caught the yawn."
+        case .catchWave: "Paw in the air."
+        case .nobodyYawning: "Wide awake."
         }
     }
 
@@ -156,6 +180,9 @@ enum ShotEvaluator {
         case .nobodyBlinking: "Four pairs of eyes. All of them."
         case .catchJumper(let id): "\(id.displayName) at the top. The others behaved."
         case .allStill: "A quiet miracle."
+        case .catchYawn(let id): "\(id.displayName) could not fight it. You were ready."
+        case .catchWave(let id): "\(id.displayName) said hello. You pressed it."
+        case .nobodyYawning: "Not a single yawn. Impressive."
         }
     }
 

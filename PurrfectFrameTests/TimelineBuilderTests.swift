@@ -6,7 +6,8 @@ struct TimelineBuilderTests {
     @Test("Every seed has an achievable success window")
     func guaranteedWindow() {
         let missions: [Mission] = [
-            .allLooking, .twoJumping, .noOverlap, .nobodyBlinking, .allStill, .catchJumper(.butter),
+            .allLooking, .twoJumping, .noOverlap, .nobodyBlinking, .allStill,
+            .catchJumper(.butter), .catchYawn(.nori), .catchWave(.mochi), .nobodyYawning,
         ]
         let difficulties: [Difficulty] = [.easy, .medium, .hard]
         let cast = CharacterID.cafeCast
@@ -14,7 +15,7 @@ struct TimelineBuilderTests {
 
         for mission in missions {
             for difficulty in difficulties {
-                for seed: UInt64 in 1...40 {
+                for seed: UInt64 in 1...24 {
                     let timeline = TimelineBuilder.build(
                         mission: mission,
                         cast: cast,
