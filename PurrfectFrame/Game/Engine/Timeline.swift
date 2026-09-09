@@ -166,6 +166,8 @@ enum RoundScheme: String, CaseIterable, Sendable {
     case yawnRipple
     case huddle
     case pawParty
+    case stretch
+    case peekaboo
 }
 
 enum TimelineBuilder {
@@ -220,6 +222,17 @@ enum TimelineBuilder {
             let kinds = chaosPool(personality: id.personality, mission: mission, scheme: scheme)
             for _ in 0..<difficulty.chaosCount {
                 let kind = rng.pick(kinds)
+                guard let start = slot(
+                    rng: &rng,
+                    duration: kind.duration,
+                    forbidden: [forbidden, 0...introEnd]
+                ) else { continue }
+                apply(kind, at: start, facing: &facing, blink: &blink, jump: &jump, cover: &cover, yawn: &yawn, paw: &paw, derp: &derp)
+            }
+
+            let lifePool: [EventKind] = [.blink, .paw, .derp, .yawn, .turn]
+            for _ in 0..<2 {
+                let kind = rng.pick(lifePool)
                 guard let start = slot(
                     rng: &rng,
                     duration: kind.duration,
@@ -327,6 +340,8 @@ enum TimelineBuilder {
         case .yawnRipple: pool += [.yawn, .yawn]
         case .huddle: pool += [.cover, .cover]
         case .pawParty: pool += [.paw, .paw]
+        case .stretch: pool += [.yawn, .paw]
+        case .peekaboo: pool += [.cover, .turn, .derp]
         }
         return pool
     }
@@ -374,27 +389,45 @@ enum TimelineBuilder {
         paw: inout Channel,
         derp: inout Channel
     ) {
+        var origins: [TimeInterval] = []
         let afterIntro = introEnd + 0.2
-        let beforeWindow = max(afterIntro, window.lowerBound - 1.6)
-        guard beforeWindow > afterIntro + 0.3 else { return }
-        let stagger = Double(index) * 0.48
-        switch scheme {
-        case .scatter:
-            derp.addPulse(at: rng.next(in: afterIntro...beforeWindow), duration: EventKind.derp.duration, peak: 0.85, hold: 0.28)
-        case .blinkWave:
-            blink.addPulse(at: afterIntro + stagger, duration: EventKind.blink.duration, peak: 1, hold: 0.45)
-        case .turnOff:
-            facing.addPulse(at: afterIntro + stagger, duration: EventKind.turn.duration, peak: 1, hold: 0.55)
-        case .jumpRelay:
-            jump.addPulse(at: afterIntro + stagger * 1.4, duration: EventKind.jump.duration, peak: 1, hold: 0.22)
-        case .yawnRipple:
-            yawn.addPulse(at: afterIntro + stagger, duration: EventKind.yawn.duration, peak: 1, hold: 0.45)
-        case .huddle:
-            if index % 2 == 1 {
-                cover.addPulse(at: afterIntro + 0.2, duration: EventKind.cover.duration, peak: 1, hold: 0.5)
+        let beforeWindow = window.lowerBound - 1.55
+        if beforeWindow > afterIntro + 0.35 {
+            origins.append(afterIntro)
+        }
+        let afterWindow = window.upperBound + 0.7
+        if afterWindow + 2.7 < loopDuration {
+            origins.append(afterWindow)
+        }
+        guard !origins.isEmpty else { return }
+        let stagger = Double(index) * 0.42
+        for origin in origins {
+            switch scheme {
+            case .scatter:
+                let latest = min(origin + 1.8, loopDuration - EventKind.derp.duration - 0.2)
+                guard latest > origin else { break }
+                derp.addPulse(at: rng.next(in: origin...latest), duration: EventKind.derp.duration, peak: 0.85, hold: 0.28)
+            case .blinkWave:
+                blink.addPulse(at: origin + stagger, duration: EventKind.blink.duration, peak: 1, hold: 0.45)
+            case .turnOff:
+                facing.addPulse(at: origin + stagger, duration: EventKind.turn.duration, peak: 1, hold: 0.55)
+            case .jumpRelay:
+                jump.addPulse(at: origin + stagger * 1.3, duration: EventKind.jump.duration, peak: 1, hold: 0.22)
+            case .yawnRipple:
+                yawn.addPulse(at: origin + stagger, duration: EventKind.yawn.duration, peak: 1, hold: 0.45)
+            case .huddle:
+                if index % 2 == 1 {
+                    cover.addPulse(at: origin + 0.15, duration: EventKind.cover.duration, peak: 1, hold: 0.5)
+                }
+            case .pawParty:
+                paw.addPulse(at: origin + stagger, duration: EventKind.paw.duration, peak: 1, hold: 0.4)
+            case .stretch:
+                yawn.addPulse(at: origin + stagger, duration: EventKind.yawn.duration, peak: 1, hold: 0.4)
+                paw.addPulse(at: origin + stagger + 0.55, duration: EventKind.paw.duration, peak: 0.9, hold: 0.3)
+            case .peekaboo:
+                cover.addPulse(at: origin + stagger, duration: EventKind.cover.duration, peak: 1, hold: 0.4)
+                facing.addPulse(at: origin + stagger + 0.35, duration: EventKind.turn.duration, peak: 0.85, hold: 0.3)
             }
-        case .pawParty:
-            paw.addPulse(at: afterIntro + stagger, duration: EventKind.paw.duration, peak: 1, hold: 0.4)
         }
     }
 

@@ -145,7 +145,7 @@ struct PFScreen<Content: View>: View {
 struct SceneCrop: View {
     var name: String
     var height: CGFloat
-    var alignment: Alignment = .bottom
+    var alignment: Alignment = .top
 
     var body: some View {
         Image(name)

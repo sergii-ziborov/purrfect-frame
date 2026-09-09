@@ -10,30 +10,31 @@ struct HomeView: View {
             let next = LevelCatalog.nextPlayable(progress: model.progress)
             let level = LevelCatalog.level(world: next.world, index: next.index)
 
-            VStack(spacing: short ? 12 : 18) {
-                header
-                playCard(level: level, short: short)
-                destRow
-                dailyRow
-                ratingsStrip
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, short ? 8 : 16)
-            .padding(.bottom, 12)
-            .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .background {
-                Palette.cream
+            ZStack(alignment: .top) {
+                Palette.cream.ignoresSafeArea()
+                Image("CafeBackground")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+                    .clipped()
+                    .opacity(0.16)
                     .ignoresSafeArea()
-                    .overlay {
-                        Image("CafeBackground")
-                            .resizable()
-                            .scaledToFill()
-                            .opacity(0.14)
-                            .ignoresSafeArea()
-                            .allowsHitTesting(false)
+                    .allowsHitTesting(false)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: short ? 12 : 16) {
+                        header
+                        playCard(level: level, short: short)
+                        destRow
+                        dailyRow
+                        ratingsStrip
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, short ? 8 : 14)
+                    .padding(.bottom, 20)
+                    .frame(maxWidth: sizeClass == .regular ? 560 : .infinity)
+                    .frame(maxWidth: .infinity)
+                }
             }
         }
     }
@@ -70,27 +71,60 @@ struct HomeView: View {
     }
 
     private func playCard(level: LevelDefinition, short: Bool) -> some View {
-        Button {
+        let previewHeight: CGFloat = short ? 210 : 248
+        return Button {
             model.playTapped()
         } label: {
             VStack(alignment: .leading, spacing: 0) {
-                ZStack(alignment: .bottomLeading) {
-                    SceneCrop(name: level.world.background(for: level.index), height: short ? 148 : 176)
-                    LinearGradient(colors: [.clear, .black.opacity(0.58)], startPoint: .center, endPoint: .bottom)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(level.world.title.uppercased())
-                            .font(.system(size: 11, weight: .heavy, design: .rounded))
-                            .tracking(1.1)
-                            .foregroundStyle(.white.opacity(0.8))
-                        Text("Level \(level.index + 1)")
-                            .font(.pfDisplay(26))
-                            .foregroundStyle(.white)
-                        Text(level.mission.prompt)
-                            .font(.pfBody(14))
-                            .foregroundStyle(.white.opacity(0.92))
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
+                    let now = context.date.timeIntervalSinceReferenceDate
+                    ZStack(alignment: .bottom) {
+                        Image(level.world.background(for: level.index))
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity, minHeight: previewHeight, maxHeight: previewHeight, alignment: .top)
+                            .clipped()
+
+                        LinearGradient(
+                            colors: [.clear, .black.opacity(0.18), .black.opacity(0.62)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+
+                        HStack(alignment: .bottom, spacing: -10) {
+                            ForEach(Array(level.cast.enumerated()), id: \.element.id) { index, id in
+                                CreatureView(
+                                    id: id,
+                                    pose: IdleMotion.pose(id: id, at: now, index: index)
+                                )
+                                .scaleEffect(short ? 0.40 : 0.46)
+                                .frame(width: short ? 74 : 84, height: short ? 92 : 104)
+                            }
+                        }
+                        .padding(.bottom, 58)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(level.world.title.uppercased())
+                                .font(.system(size: 11, weight: .heavy, design: .rounded))
+                                .tracking(1.1)
+                                .foregroundStyle(.white.opacity(0.82))
+                            Text("Level \(level.index + 1)")
+                                .font(.pfDisplay(24))
+                                .foregroundStyle(.white)
+                            Text(level.mission.prompt)
+                                .font(.pfBody(14))
+                                .foregroundStyle(.white.opacity(0.92))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .padding(16)
+                    .frame(height: previewHeight)
+                    .clipped()
                 }
+
                 HStack {
                     Label("Play", systemImage: "camera.fill")
                         .font(.pfBody(17))

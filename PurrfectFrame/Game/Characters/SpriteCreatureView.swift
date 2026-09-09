@@ -10,9 +10,11 @@ struct SpriteCreatureView: View {
 
     var body: some View {
         let jumpY = -pose.jump * 52
-        let squash = 1 - pose.jump * 0.05 + pose.breath * 0.012
-        let stretch = 1 + pose.jump * 0.07 - pose.breath * 0.01
+        let squash = 1 - pose.jump * 0.05 + pose.breath * 0.018
+        let stretch = 1 + pose.jump * 0.07 - pose.breath * 0.014
         let coverX = pose.cover * 30 * pose.turnSign
+        let sway = (pose.breath - 0.5) * 5 + pose.derp * 7 * pose.turnSign
+        let nod = pose.yawn * 6 - pose.paw * 3
 
         ZStack {
             Ellipse()
@@ -28,7 +30,9 @@ struct SpriteCreatureView: View {
             }
             .compositingGroup()
             .scaleEffect(x: squash, y: stretch)
-            .offset(x: coverX, y: jumpY)
+            .rotationEffect(.degrees(sway))
+            .rotationEffect(.degrees(nod), anchor: .bottom)
+            .offset(x: coverX + pose.derp * 5 * pose.turnSign, y: jumpY)
         }
         .frame(width: 200, height: 230)
         .scaleEffect(id.bodyScale)
@@ -84,5 +88,34 @@ struct CreatureView: View {
     var body: some View {
         SpriteCreatureView(id: id, pose: pose)
             .accessibilityLabel(id.displayName)
+    }
+}
+
+enum IdleMotion {
+    static func pose(id: CharacterID, at time: TimeInterval, index: Int) -> Pose {
+        var pose = Pose.cameraReady
+        pose.turnSign = index % 2 == 0 ? 1 : -1
+        pose.breath = 0.5 + 0.5 * sin(time * 0.95 + Double(index) * 1.15)
+        pose.blink = pulse((time + Double(index) * 1.35).truncatingRemainder(dividingBy: 5.2), duration: 1.2)
+        pose.paw = pulse((time + Double(index) * 2.5 + 1.4).truncatingRemainder(dividingBy: 8.8), duration: 1.7) * 0.95
+        if index == 1 || index == 3 {
+            pose.yawn = pulse((time + Double(index) * 1.9 + 3.2).truncatingRemainder(dividingBy: 13.5), duration: 2.15) * 0.92
+        }
+        if index == 0 || index == 2 {
+            pose.derp = pulse((time + Double(index) * 2.8 + 2.0).truncatingRemainder(dividingBy: 11.0), duration: 1.55) * 0.88
+        }
+        if id.personality == .turner {
+            pose.facing = pulse((time + Double(index) * 1.6 + 5.0).truncatingRemainder(dividingBy: 12.4), duration: 2.2) * 0.9
+        }
+        _ = id
+        return pose
+    }
+
+    private static func pulse(_ t: Double, duration: Double) -> Double {
+        guard t >= 0, t < duration else { return 0 }
+        let u = t / duration
+        if u < 0.28 { return u / 0.28 }
+        if u > 0.72 { return max(0, (1 - u) / 0.28) }
+        return 1
     }
 }

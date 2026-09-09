@@ -238,9 +238,9 @@ struct Difficulty: Equatable, Sendable {
     var windowDuration: TimeInterval
     var chaosCount: Int
 
-    static let easy = Difficulty(windowDuration: 1.35, chaosCount: 3)
-    static let medium = Difficulty(windowDuration: 0.90, chaosCount: 5)
-    static let hard = Difficulty(windowDuration: 0.55, chaosCount: 7)
+    static let easy = Difficulty(windowDuration: 1.35, chaosCount: 5)
+    static let medium = Difficulty(windowDuration: 0.90, chaosCount: 7)
+    static let hard = Difficulty(windowDuration: 0.55, chaosCount: 9)
 }
 
 struct LevelDefinition: Equatable, Identifiable, Sendable {
