@@ -95,23 +95,19 @@ struct HomeView: View {
                 TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
                     let now = context.date.timeIntervalSinceReferenceDate
                     GeometryReader { geo in
-                        let animal = min(geo.size.width / 520, geo.size.height / 320, 0.5)
+                        let maxCatW = (geo.size.width - 28) / 4
+                        let maxCatH = geo.size.height * 0.46
+                        let animal = min(maxCatW / 200, maxCatH / 230)
                         ZStack(alignment: .bottom) {
                             Color.clear
                                 .overlay {
-                                    Image(level.world.background(for: level.index))
+                                    Image(level.world.backgroundAsset)
                                         .resizable()
                                         .scaledToFill()
                                 }
                                 .clipped()
 
-                            LinearGradient(
-                                colors: [.clear, .clear, .black.opacity(0.55)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-
-                            HStack(alignment: .bottom, spacing: -8) {
+                            HStack(alignment: .bottom, spacing: 0) {
                                 ForEach(Array(level.cast.enumerated()), id: \.element.id) { index, id in
                                     CreatureView(
                                         id: id,
@@ -119,27 +115,11 @@ struct HomeView: View {
                                     )
                                     .scaleEffect(animal)
                                     .frame(width: 200 * animal, height: 230 * animal)
+                                    .frame(maxWidth: .infinity)
                                 }
                             }
-                            .padding(.bottom, 52)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(level.world.title.uppercased())
-                                    .font(.system(size: 11, weight: .heavy, design: .rounded))
-                                    .tracking(1.1)
-                                    .foregroundStyle(.white.opacity(0.82))
-                                Text("Level \(level.index + 1)")
-                                    .font(.pfDisplay(22))
-                                    .foregroundStyle(.white)
-                                Text(level.mission.prompt)
-                                    .font(.pfBody(14))
-                                    .foregroundStyle(.white.opacity(0.94))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 10)
+                            .padding(.bottom, 10)
                         }
                         .frame(width: geo.size.width, height: geo.size.height)
                         .clipped()
@@ -147,6 +127,22 @@ struct HomeView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(level.world.title)  ·  Level \(level.index + 1)")
+                        .font(.system(size: 12, weight: .heavy, design: .rounded))
+                        .foregroundStyle(Palette.inkSoft)
+                    Text(level.mission.prompt)
+                        .font(.pfBody(16))
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+                .padding(.bottom, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white)
 
                 HStack {
                     Label("Play", systemImage: "camera.fill")
