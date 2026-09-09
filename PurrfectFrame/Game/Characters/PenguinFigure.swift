@@ -144,18 +144,3 @@ struct PenguinFigure: View {
     }
 }
 
-struct CreatureView: View {
-    var id: CharacterID
-    var pose: Pose
-
-    var body: some View {
-        Group {
-            if id.species == .cat {
-                CatFigure(id: id, pose: pose)
-            } else {
-                PenguinFigure(id: id, pose: pose)
-            }
-        }
-        .accessibilityLabel(id.displayName)
-    }
-}
